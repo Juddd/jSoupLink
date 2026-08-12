@@ -1,237 +1,265 @@
 # jsoupLink
 
-Created by Calle Ekdahl.
+原作者：[Calle Ekdahl](https://github.com/cekdahl)。
 
-GPL-2.0-or-later licensed.
+本项目依据 GPL-2.0-or-later 许可证发布。
 
-Current version: 1.1.0
+当前版本：1.1.0
 
-## Introduction
+## 简介
 
-[jsoup](http://jsoup.org) is an open-source library written in Java, which excels at parsing HTML and manipulating the DOM. jsoupLink is a package written for Mathematica in Wolfram Language which aims to provide an interface to jsoup that feels natural for Mathematica users.
+[jsoup](https://jsoup.org/) 是一个使用 Java 编写的开源库，擅长解析 HTML 和操作 DOM。jsoupLink 是一个使用 Wolfram Language 编写的 Mathematica 包，旨在为 Mathematica 用户提供自然、易用的 jsoup 接口。
 
-While traditionally HTML has been worked on in Mathematica by importing it as symbolic XML and painstakingly transforming it with pattern matching, jsoupLink introduces the concept of HTML element objects, which make it super easy to traverse the DOM tree and to modify it.
+在传统做法中，Mathematica 通常将 HTML 导入为符号 XML，再通过模式匹配进行较为繁琐的变换。jsoupLink 则引入了 HTML 元素对象，使遍历和修改 DOM 树变得更加直接。
 
-The most common application for jsoupLink is to extract information from websites, for example table data.
+jsoupLink 最常见的用途是从网页中提取信息，例如表格数据。
 
-## Installing jsoupLink
-`jsoupLink` is distributed in the form of a paclet. Download version 1.1.0 from [the releases page](https://github.com/Juddd/jSoupLink/releases) and install it using `PacletInstall`:
+## 1.1.0 更新
 
-    PacletInstall["~/Downloads/jsoupLink-1.1.0.paclet"]
+1.1.0 在保留原有属性式 API 的基础上，补全了上游尚未完成的 1.1 分支：
 
-Use `Needs` to load jsoupLink:
+- 上游 1.1 分支新增了 8 个便捷函数：`HTMLSelect`、`HTMLAttribute`、`HTMLAttributes`、`HTMLParent`、`HTMLChildren`、`HTMLSiblings`、`HTMLOwnText` 和 `HTMLAllText`。其中 `HTMLSelect` 与 `HTMLAttribute` 还支持操作符形式。
+- 原有的 `element["Property"]` 属性式调用仍然可用；这些便捷函数只是对应属性调用的薄包装，不会破坏现有 notebook。
+- 本 fork 补全了上游文档中已经声明、但源码中尚未实现的 `HTMLTree[element]`，它等价于 `element["DOMTree"]`。
+- 修复了上游 [#4](https://github.com/cekdahl/jSoupLink/issues/4)：统一区分大小写的包入口和 Paclet 元数据，使 ``Needs["jsoupLink`"]`` 能在 Wolfram 15.0/Linux 上正确加载。
+- 修复并通过回归测试锁定了上游 [#5](https://github.com/cekdahl/jSoupLink/issues/5) 涉及的 `:containsData(...)` 选择器行为。
+- 内置 jsoup 已更新至 1.23.1，并确保 JAR、符号元数据和文档均被正确打入 Paclet。
+- 为兼容旧代码，HTML 元素对象的头部仍保持为 ``Global`HTMLElement``。
 
-    Needs["jsoupLink`"]
+## 安装 jsoupLink
 
-## Importing and Exporting Documents
-It is easy to import and export HTML using jsoupLink, with the built-in `Import` and `Export` commands. Specify `HTMLDOM` as the file format.
+jsoupLink 以 Paclet 形式发布。请从 [Releases 页面](https://github.com/Juddd/jSoupLink/releases)下载 1.1.0，然后执行：
 
-![Mathematica graphics](http://i.stack.imgur.com/5yVE6.png)
+```wl
+PacletInstall["/path/to/jsoupLink-1.1.0.paclet"]
+```
 
-The returned value is an HTML element object. It has properties that can be used to access information about itself or its children. It also has properties that can modify itself or its children. Having modified the object, exporting it back to HTML is equally simple:
+使用 `Needs` 加载 jsoupLink：
 
-![Mathematica graphics](http://i.stack.imgur.com/VclVR.png)
+```wl
+Needs["jsoupLink`"]
+```
 
-## HTML Elements
-HTML is but a bunch of nested elements. `<div><p>Paragraph 1</p><p>Paragraph 2</p></div>` is made up of a `div` element and two `p` elements, the `div` being the parent to its two children `p`, and the `p`s being siblings. The idea of jsoup is to assign one object to each element, and to relate the objects to each other through properties. The property `Children` of the object corresponding to `div` would list the two objects corresponding to the `p` elements, the property `Parent` on either of the `p` elements would list the object `div`, and the `Siblings` property of either of the `p` elements would list the other `p` element. Furthermore other properties would retrieve other types of information. The `InnerHTML` property of `div` would return `<p>Paragraph 1</p><p>Paragraph 2</p>` as a string, whereas the `OuterHTML` property of the first `p` would return `<p>Paragraph 1</p>`.
+请注意，包上下文名称区分大小写。请使用上面的 ``Needs["jsoupLink`"]``，不要写成 ``Needs["jSoupLink`"]``。
 
-jsoupLink provides direct access to all of these objects and their properties. In a notebook, these objects have a distinctive display:
+## 导入和导出文档
 
-![Mathematica graphics](http://i.stack.imgur.com/JOSg4.png)
+jsoupLink 可以配合内置的 `Import` 和 `Export` 命令导入、导出 HTML，只需将文件格式指定为 `"HTMLDOM"`：
 
-Starting with the object corresponding to the outermost element, `html`, various properties can be used to find all other elements of interest. Properties can be retrieved as subvalues of the objects, as in the image.
+```wl
+document = Import["/path/to/input.html", "HTMLDOM"];
+Export["/path/to/output.html", document, "HTMLDOM"]
+```
 
-In difference to normal Wolfram Language expressions, objects representing elements are mutable, and there are several properties that can modify elements. Most properties can be accessed as `obj["property"]`, some take several arguments, e.g. `obj["Attribute", "attributeName"]`, or `obj["Attribute", "key", "value"]`, which will set the attribute `key` to the value `value`. Since setting attributes is a common task, the shorthand notation `obj[key] = val` is also provided. Attributes can also be retrieved with `obj[attr]` if `attr` is not one of the properties listed by `obj["Properties"]`.
+![Mathematica 图形](http://i.stack.imgur.com/5yVE6.png)
 
-## Properties
-Throughout this list, objects representing HTML elements will be referred to simply as elements. Elements are arranged in a tree structure, called the DOM tree. Whenever descriptions such as "the same level" or "topmost", or "beneath" are used in the following text, it refers to this tree structure. (See also the first paragraph of the preceding section.)
+导入结果是一个 HTML 元素对象。它提供了一组属性，可以读取或修改自身及其子元素。修改对象后，可以同样方便地将其重新导出为 HTML：
 
-This is a complete listing of all the properties, available to all elements:
+![Mathematica 图形](http://i.stack.imgur.com/VclVR.png)
 
- - `element["TagName"]`
- Tag name.
-Example: link elements return `a`, paragraph elements return `p`.
+## HTML 元素
 
- - `element["TagName", "tag"]`
- Set element tag name.
- Example: Use to convert  an`h1` element into an `h2` element.
+HTML 文档由嵌套元素组成。例如，`<div><p>Paragraph 1</p><p>Paragraph 2</p></div>` 包含一个 `div` 元素和两个 `p` 元素：`div` 是两个 `p` 的父元素，两个 `p` 互为兄弟元素。
 
- - `element["Root"]`
- Topmost element, usually `html`.
+jsoup 为每个元素提供一个对象，并通过属性表达对象之间的关系。对应 `div` 的对象，其 `"Children"` 属性会返回两个 `p` 对象；任一 `p` 对象的 `"Parent"` 属性会返回 `div` 对象；任一 `p` 对象的 `"Siblings"` 属性会返回另一个 `p` 对象。
 
- - `element["Parent"]`
- Immediate ancestor of `element`. 
- Example: the parent to `body` is `html`.
+其他属性可以读取元素的内容。例如，`div` 的 `"InnerHTML"` 属性返回字符串 `<p>Paragraph 1</p><p>Paragraph 2</p>`，而第一个 `p` 的 `"OuterHTML"` 属性返回 `<p>Paragraph 1</p>`。
 
- - `element["Children"]`
- All elements that lie directly under `element`.
- Example: `li` elements are usually children of a `ul`.
+jsoupLink 可以直接访问这些对象及其属性。在 notebook 中，HTML 元素对象拥有专门的摘要显示形式：
 
- - `element["Siblings"]`
- All elements on the same level as `element`.
- Example: The siblings of an `<li>` elements are usually other `<li>` elements.
+![Mathematica 图形](http://i.stack.imgur.com/JOSg4.png)
 
- - `element["Select", "selector"]`
-All elements from anywhere beneath `element`, that match the CSS selector "selector". More information about valid syntax: [Use selector syntax to find elements](https://jsoup.org/cookbook/extracting-data/selector-syntax).
+从最外层的 `html` 元素对象开始，可以通过各种属性找到其他感兴趣的元素。属性采用对象式调用，例如：
 
- - `element["AllElements"]`
- All elements beneath `element`.
+```wl
+element["TagName"]
+element["Attribute", "href"]
+element["Select", "p.note"]
+```
 
- - `element["InnerHTML"]`
- HTML corresponding to the offspring of `element`.
- Example: the inner HTML of `<div><b>Great!</b></div>` is `<b>Great</b>`.
+与普通 Wolfram Language 表达式不同，HTML 元素对象是可变对象。某些属性可以直接修改元素，例如：
 
- - `element["OuterHTML"]`
- HTML corresponding to `element` and all offspring.
- Example: the outer HTML of `<div><b>Great!</b></div>` is `<div><b>Great!</b></div>`.
+```wl
+element["Attribute", "key", "value"]
+element["AddClass", "selected"]
+```
 
- - `element["OwnText"]`
- Text which resides directly under `element`.
- Example: the `OwnText` of `<p>text <b>more text</b></p>` is `text`. The `OwnText` of the `b` element is `more text`.
+设置属性时还可以使用简写形式 `element[key] = value`。如果 `attr` 不是 `element["Properties"]` 列出的内置属性，也可以使用 `element[attr]` 直接读取同名 HTML 属性。
 
- - `element["AllText"]`
- All text beneath `element`.
- Example: `AllText` of the `html` element returns all text in the document.
+## 属性参考
 
- - `element["AllText", "text"]`
- Remove existing elements and text beneath `element` and replace with `"text"`.
+下文将表示 HTML 元素的对象简称为“元素”。元素按照 DOM 树组织；“同一层级”“最上层”和“下方”等描述均相对于这棵树而言。
 
- - `element["ID"]`
-The `ID` attribute.
+所有元素都支持以下属性：
 
- - `element["ClassNames"]`
-List of classes in the class attribute.
+- `element["TagName"]`：返回标签名。例如，链接元素返回 `"a"`，段落元素返回 `"p"`。
 
- - `element["Value"]`
- The `value` attribute, if the element has it.
+- `element["TagName", "tag"]`：设置元素的标签名。例如，可将 `h1` 元素改为 `h2`。
 
- - `element["HasAttribute", "attr"]`
- `True` if the attribute `attr` is given, and `False` otherwise.
+- `element["Root"]`：返回最上层元素，通常为 `html`。
 
- - `element["Attribute", "attr"]`
-Value of the attribute `attr`.
+- `element["Parent"]`：返回 `element` 的直接父元素。例如，`body` 的父元素通常是 `html`。
 
- - `element["Attribute", "attr", "val"]`
- Set attribute `attr` to the value `val`.
+- `element["Children"]`：返回直接位于 `element` 下方的所有子元素。例如，`li` 通常是 `ul` 的子元素。
 
- - `element["Attribute", "attr", True | False]`
-Set attribute `attr` to `""` if `True`, remove `attr` if `False`.
+- `element["Siblings"]`：返回与 `element` 位于同一层级的所有兄弟元素。例如，一个 `li` 的兄弟元素通常是其他 `li`。
 
- - `element["Attribute", "assoc"]`
- Set all attributes as given by the association `assoc`.
+- `element["Select", "selector"]`：返回 `element` 下方所有匹配 CSS 选择器的元素。选择器语法参见 [Use selector syntax to find elements](https://jsoup.org/cookbook/extracting-data/selector-syntax)。
 
- - `element["Attributes"]`
- Association with all attributes and their values.
+- `element["AllElements"]`：返回 `element` 下方的所有元素。
 
- - `element["RemoveAttribute", "attr"]`
- Remove the attribute `attr`.
+- `element["Value"]`：返回元素的 `value` 值（如果存在）。
 
- - `element["IsBlock"]`
- `True` if `element` is a block level element, `False` otherwise.
+- `element["InnerHTML"]`：返回 `element` 子级对应的 HTML。例如，`<div><b>Great!</b></div>` 的内部 HTML 是 `<b>Great!</b>`。
 
- - `element["HasText"]`
- `True` if `element["AllText"]` is not equal to `""`, `False` if it is.
+- `element["InnerHTML", "html"]`：将元素的内部 HTML 设置为 `"html"`。
 
- - `element["BaseURI"]`
- The base URI of the document.
+- `element["OuterHTML"]`：返回 `element` 自身及其所有后代对应的 HTML。例如，`<div><b>Great!</b></div>` 的外部 HTML 是 `<div><b>Great!</b></div>`。
 
- - `element["BaseURI", "uri"]`
-Set the base URI of the document.
+- `element["OwnText"]`：返回直接位于 `element` 下的文本，不包含子元素中的文本。例如，`<p>text <b>more text</b></p>` 中 `p` 的 `"OwnText"` 为 `"text"`，而 `b` 的 `"OwnText"` 为 `"more text"`。
 
- - `element["HasClass", "class"]`
- `True` if `class` appears in `element`'s class attribute, `False` otherwise.
+- `element["AllText"]`：返回 `element` 下方的全部文本。例如，对 `html` 元素调用时会返回文档中的全部文本。
 
- - `element["AddClass", "class"]`
-Add `class` to `element`'s class attribute.
+- `element["AllText", "text"]`：移除 `element` 下已有的元素和文本，并替换为 `"text"`。
 
- - `element["RemoveClass", "class"]`
- Remove `class` from `element`'s class attribute.
+- `element["ID"]`：返回 `ID` 属性。
 
- - `element["ToggleClass", "class"]`
-Add `class` to `element`'s class attribute if it doesn't have it, and remove it if it is already there.
+- `element["ClassNames"]`：返回 `class` 属性中的类名列表。
 
- - `element["Before", "html"]`
- Parse `html` and insert the resulting object before `element`.
+- `element["HasAttribute", "attr"]`：如果存在属性 `attr`，返回 `True`，否则返回 `False`。
 
- - `element["Before", el]`
-Insert element `el` before `element`.
+- `element["Attribute", "attr"]`：返回属性 `attr` 的值。
 
- - `element["After", "html"]`
- Parse `html` and insert the resulting object after `element`.
+- `element["Attribute", "attr", "value"]`：将属性 `attr` 设置为 `"value"`。
 
- - `element["After", el]`
-Insert element `el` after `element`.
+- `element["Attribute", "attr", True | False]`：值为 `True` 时将属性设置为空字符串，值为 `False` 时移除该属性。
 
- - `element["Prepend", "html"]`
- Parse `html` and prepend the resulting object to `element`'s children.
+- `element["Attribute", assoc]`：按照关联 `assoc` 一次设置多个属性。
 
- - `element["Prepend", el]`
-Prepend element `el` to `element`'s children.
+- `element["Attributes"]`：以关联形式返回全部属性及其值。
 
- - `element["Append", "html"]`
- Parse `html` and append the resulting object to `element`'s children.
+- `element["RemoveAttribute", "attr"]`：移除属性 `attr`。
 
- - `element["Append", el]`
-Append element `el` to `element`'s children.
+- `element["IsBlock"]`：如果 `element` 是块级元素，返回 `True`，否则返回 `False`。
 
- - `element["ReplaceWith", el]`
-Replace `element` with element `el`.
+- `element["HasText"]`：如果 `element["AllText"]` 不为空字符串，返回 `True`，否则返回 `False`。
 
- - `element["Remove"]`
- Remove `element`.
+- `element["BaseURI"]`：返回文档的基础 URI。
 
- - `element["Wrap", "html"]`
- Make `element` a child of the object resulting from parsing `html`.
+- `element["BaseURI", "uri"]`：设置文档的基础 URI。
 
- - `element["Unwrap"]`
- Remove `element` but keep its children, essentially moving them up one level.
+- `element["HasClass", "class"]`：如果 `"class"` 出现在元素的 `class` 属性中，返回 `True`，否则返回 `False`。
 
- - `element["Clean"]`
- Run `element` and all its offspring through a whitelist. Used to e.g. prevent XSS attacks.
+- `element["AddClass", "class"]`：向元素的 `class` 属性添加类名。
 
- - `element["DeepCopy"]`
-Return a copy of `element`, such that modifications done to the copy do not affect `element`.
+- `element["RemoveClass", "class"]`：从元素的 `class` 属性移除类名。
 
- - `element["Properties"]`
- List all properties.
+- `element["ToggleClass", "class"]`：如果元素尚无该类名则添加，否则移除。
 
- - `element["DOMTree"]`
- Display the DOM tree. Details below.
+- `element["Before", "html"]`：解析 `"html"`，并将所得内容插入 `element` 之前。
 
-## Helper functions
+- `element["Before", otherElement]`：将 `otherElement` 插入 `element` 之前。
 
-jsoupLink includes a selection of helper functions that evaluate properties on HTML element objects. The original property syntax remains supported; these functions are convenient wrappers around it.
+- `element["After", "html"]`：解析 `"html"`，并将所得内容插入 `element` 之后。
 
-- `HTMLSelect[rootElement, selector]` returns the elements that match the CSS selector.
-- `HTMLSelect[selector]` represents an operator form of HTMLSelect that can be applied to an element.
-- `HTMLAttribute[element, attribute]` gets the given attribute from the element.
-- `HTMLAttribute[attribute]` represents an operator form of HTMLAttribute that can be applied to an element.
-- `HTMLAttributes[element]` returns the attributes of the element in the form of an association.
-- `HTMLParent[element]` returns the parent of the element.
-- `HTMLChildren[element]` returns the list of children of the element.
-- `HTMLSiblings[element]` returns the list of siblings of the element.
-- `HTMLOwnText[element]` returns the text directly under the element, i.e. not nested in a child. The own text of `<h1>Hello <b>world</b></h1>` is `Hello`.
-- `HTMLAllText[element]` returns all text under the element. Applied to `<h1>Hello <b>world</b></h1>` it would return `Hello world`.
-- `HTMLTree[element]` opens the same DOM tree interface as `element["DOMTree"]`.
+- `element["After", otherElement]`：将 `otherElement` 插入 `element` 之后。
 
-## DOM Tree Interface
-`element["DOMTree"]` opens an interface to view the DOM tree with `element` as root:
+- `element["Prepend", "html"]`：解析 `"html"`，并将所得内容插入 `element` 的子元素列表开头。
 
-![Screen recording](https://mmase.s3.amazonaws.com/domview.gif)
+- `element["Prepend", otherElement]`：将 `otherElement` 插入 `element` 的子元素列表开头。
 
-Elements can be selected by clicking on them. The "copy node" button writes the corresponding element to the clipboard, so that it can be pasted into a notebook. "Copy CSS selector" writes a CSS selector that uniquely identifies the selected element to the clipboard.
+- `element["Append", "html"]`：解析 `"html"`，并将所得内容追加到 `element` 的子元素列表末尾。
 
-## Retrieving absolute URLs
+- `element["Append", otherElement]`：将 `otherElement` 追加到 `element` 的子元素列表末尾。
 
-If you are having problem retrieving absolute URLs from links, you may try to retrieve the `abs:href` attribute instead of the `href` attribute.
+- `element["ReplaceWith", otherElement]`：使用 `otherElement` 替换 `element`。
 
-## Building jsoupLink from source
+- `element["Remove"]`：移除 `element`。
 
-Run `./scripts/build.wls` from the repository root. The script uses `PacletBuild` and verifies the manifest, extracted archive, bundled jsoup JAR, documentation, and entry-file names. See [BUILD.md](BUILD.md) for build and isolated-install test instructions.
+- `element["Wrap", "html"]`：解析 `"html"`，并使用所得元素包裹 `element`。
 
-Version 1.1.0 bundles jsoup 1.23.1 from Maven Central:
+- `element["Unwrap"]`：移除 `element`，但保留其子元素，相当于将子元素上移一级。
 
-- SHA-1: `0c0350bb325da274f0508349109516a7855d01ab`
-- SHA-256: `8b15e2b28eeb1e0a88a9b7dab4dc0c23524491c56959785dea22f7846897b668`
+- `element["Clean"]`：使用 jsoup 的安全清理机制处理 `element` 及其所有后代，可用于降低 XSS 风险。
 
-jsoupLink is licensed under GPL-2.0-or-later. The bundled jsoup dependency is MIT-licensed; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- `element["DeepCopy"]`：返回 `element` 的深拷贝；对副本的修改不会影响原元素。
+
+- `element["Properties"]`：列出全部可用属性。
+
+- `element["DOMTree"]`：打开 DOM 树查看界面，详见下文。
+
+## 1.1 便捷函数
+
+上游 1.1 分支新增了 8 个便捷函数。它们只是对属性式调用的包装，因此下面两种写法可以同时使用：
+
+```wl
+HTMLChildren[element]
+element["Children"]
+```
+
+8 个便捷函数与原属性式调用的对应关系如下：
+
+| 1.1 便捷函数 | 等价的属性式调用 | 说明 |
+| --- | --- | --- |
+| `HTMLSelect[rootElement, selector]` | `rootElement["Select", selector]` | 返回匹配 CSS 选择器的元素；也支持操作符形式 `HTMLSelect[selector][rootElement]`。 |
+| `HTMLAttribute[element, attribute]` | `element["Attribute", attribute]` | 返回指定属性的值；也支持操作符形式 `HTMLAttribute[attribute][element]`。 |
+| `HTMLAttributes[element]` | `element["Attributes"]` | 以关联形式返回全部属性。 |
+| `HTMLParent[element]` | `element["Parent"]` | 返回父元素。 |
+| `HTMLChildren[element]` | `element["Children"]` | 返回子元素列表。 |
+| `HTMLSiblings[element]` | `element["Siblings"]` | 返回兄弟元素列表。 |
+| `HTMLOwnText[element]` | `element["OwnText"]` | 返回元素自身直接包含的文本，不包含子元素中的文本。 |
+| `HTMLAllText[element]` | `element["AllText"]` | 返回元素及其后代中的全部文本。 |
+
+例如，可以使用操作符形式选择所有 `p.lead` 元素，再取得第一个元素的文本：
+
+```wl
+lead = First@HTMLSelect["p.lead"][document];
+HTMLAllText[lead]
+```
+
+### `HTMLTree`
+
+上游 1.1 已提供 `HTMLTree` 的文档页面，但没有实现函数定义。本 fork 补全了这一薄包装：
+
+```wl
+HTMLTree[element]
+```
+
+它与下面的旧属性式调用完全等价：
+
+```wl
+element["DOMTree"]
+```
+
+## DOM 树界面
+
+`element["DOMTree"]` 或 `HTMLTree[element]` 会打开以 `element` 为根节点的 DOM 树查看界面：
+
+![界面录屏](https://mmase.s3.amazonaws.com/domview.gif)
+
+可以通过单击选择元素。“Copy node”按钮会将对应的 HTML 元素对象写入剪贴板，以便粘贴到 notebook 中；“Copy CSS selector”按钮会复制一个能够唯一标识所选元素的 CSS 选择器。
+
+## 获取绝对 URL
+
+如果无法从链接中取得绝对 URL，可以尝试读取 `"abs:href"` 属性，而不是 `"href"`：
+
+```wl
+element["Attribute", "abs:href"]
+```
+
+## 从源码构建
+
+在仓库根目录运行：
+
+```bash
+./scripts/build.wls
+```
+
+该脚本使用 `PacletBuild` 构建 Paclet，并验证 manifest、解包后的归档、内置 jsoup JAR、文档和入口文件名。构建和隔离安装测试的详细说明参见 [BUILD.md](BUILD.md)。
+
+1.1.0 内置从 Maven Central 获取的 jsoup 1.23.1：
+
+- SHA-1：`0c0350bb325da274f0508349109516a7855d01ab`
+- SHA-256：`8b15e2b28eeb1e0a88a9b7dab4dc0c23524491c56959785dea22f7846897b668`
+
+jsoupLink 使用 GPL-2.0-or-later 许可证；内置的 jsoup 依赖使用 MIT 许可证，详情参见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

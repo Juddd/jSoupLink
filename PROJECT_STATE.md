@@ -11,6 +11,7 @@
 - 已 cherry-pick Felix Kasza 的 PR #8 构建提交并保留作者信息；入口已落在 `jsoupLink/Kernel/jsoupLink.wl`。
 - 已完成 #4 的入口/元数据修复、锁定 #5、更新 jsoup、补全文档/许可证/测试和唯一构建入口。
 - 已提交并发布到 `Juddd/jSoupLink`；1.1.0 tag 与 Release 均指向已验证的维护提交。
+- README 已翻译为简体中文，并补充 1.1.0 更新概览、8 个上游便捷函数与旧属性 API 的对应关系，以及本 fork 补全 `HTMLTree` 的边界说明。
 
 ## Decisions / 关键决定
 
