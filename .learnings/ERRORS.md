@@ -1,5 +1,81 @@
 # Errors
 
+## [ERR-20260812-015] Git query from release download directory
+
+**Logged**: 2026-08-12T17:25:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: infra
+
+### Summary / 摘要
+
+远端资产校验命令切换到临时下载目录后，末尾继续运行 `git ls-remote origin`，因该目录不属于仓库而失败。
+
+### Error
+
+```text
+fatal: 'origin' does not appear to be a git repository
+```
+
+### Context / 背景
+
+- 此前的 Release 下载、SHA-256 和资产状态核验均已成功。
+- 失败只影响同一组合命令末尾的 tag target 查询。
+
+### Suggested Fix / 修复
+
+回到项目工作目录单独运行 `git ls-remote origin 'refs/tags/1.1.0^{}'`，再与本地 `git rev-parse '1.1.0^{}'` 比较。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: .git/config
+
+### Resolution
+
+- **Resolved**: 2026-08-12T17:25:00+08:00
+- **Notes**: 已在仓库目录重跑；远端和本地 tag target 均为 `02b28f3f15cf0f6e438cd9d04fe87d0c33c507ee`。
+
+---
+
+## [ERR-20260812-014] Release checksum working directory
+
+**Logged**: 2026-08-12T17:20:00+08:00
+**Priority**: medium
+**Status**: resolved
+**Area**: infra
+
+### Summary / 摘要
+
+Release 创建前从仓库根运行 `sha256sum -c build/jsoupLink-1.1.0.paclet.sha256`，而校验文件记录资产 basename，导致本地预检找不到文件；同一 shell 未启用 `set -e`，Release 随后仍创建成功。
+
+### Error
+
+```text
+sha256sum: jsoupLink-1.1.0.paclet: No such file or directory
+```
+
+### Context / 背景
+
+- Release URL 已返回，需独立核验远端资产而不能仅依赖本地源文件。
+- 正确的本地校验应在 `build/` 目录运行。
+
+### Suggested Fix / 修复
+
+从 GitHub Release 下载 `.paclet` 和 `.sha256` 到全新临时目录，在该目录运行 `sha256sum -c`，并核对 Release 状态、资产大小和 tag target。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: build/jsoupLink-1.1.0.paclet.sha256
+
+### Resolution
+
+- **Resolved**: 2026-08-12T17:25:00+08:00
+- **Notes**: 从 GitHub Release 将两个资产重新下载到独立临时目录并成功执行 `sha256sum -c`；GitHub digest、本地重算和校验文件三者一致。
+
+---
+
 ## [ERR-20260812-013] gh repo fork boolean flag
 
 **Logged**: 2026-08-12T17:10:00+08:00
