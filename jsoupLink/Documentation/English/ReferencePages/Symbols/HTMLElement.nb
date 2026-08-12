@@ -98,7 +98,7 @@ text in the document.\
      "9a099fdb-33d0-c749-a2ed-dfee6e566cb9"], Cell[
     "\"Children\"", "TableText",ExpressionUUID->
      "3fdb621b-fc6d-a747-9664-75ea48dc4d7b"], Cell[
-    "XXXX", "TableText",ExpressionUUID->
+    "The child elements directly contained by the element.", "TableText",ExpressionUUID->
      "c633dce0-98fb-2545-9357-f31a76198f67"]},
    {Cell["      ", "ModInfo",ExpressionUUID->
      "e6608905-8c99-be4a-8a52-8789fed11ace"], Cell[
@@ -226,7 +226,7 @@ information about valid syntax: ",
 Cell["\<\
 This documentation only includes a subset of the available methods. Check out \
 the Github README for a full list of methods: \
-https://github.com/cekdahl/jSoupLink\
+https://github.com/Juddd/jSoupLink\
 \>", "Notes",
  CellChangeTimes->{{3.924498916909897*^9, 3.9244989775803585`*^9}},
  CellID->67317088,ExpressionUUID->"24de0f9d-dd41-3d48-8e4d-263b6be94d0f"],
@@ -2135,21 +2135,7 @@ Cell[BoxData[
   "Options", "ExampleSection",ExpressionUUID->
    "29a27bb2-a447-ab47-87f8-f87b65f3e982"],
   $Line = 0; Null]], "ExampleSection",
- CellID->556824770,ExpressionUUID->"3ef41ba8-a983-2649-9337-bc67e3526a0c"],
-
-Cell[BoxData[
- InterpretationBox[Cell[
-  "XXXX", "ExampleSubsection",ExpressionUUID->
-   "1fe37c9e-0a28-214f-a40b-16ad900f5176"],
-  $Line = 0; Null]], "ExampleSubsection",
- CellID->125140695,ExpressionUUID->"bf4b5758-77a2-624f-9773-97f9ec649823"],
-
-Cell[BoxData[
- InterpretationBox[Cell[
-  "XXXX", "ExampleSubsection",ExpressionUUID->
-   "37ae3058-313d-0346-a710-fbbcdb73be2d"],
-  $Line = 0; Null]], "ExampleSubsection",
- CellID->107648713,ExpressionUUID->"9408a63b-fc25-9545-b562-fb6a76f4e974"]
+ CellID->556824770,ExpressionUUID->"3ef41ba8-a983-2649-9337-bc67e3526a0c"]
 }, Open  ]],
 
 Cell[BoxData[
@@ -2195,7 +2181,7 @@ Cell["Metadata", "MetadataSection",
 
 Cell[TextData[{
  "New in: ",
- Cell["XX", "HistoryData",
+ Cell["1.0.0", "HistoryData",
   CellTags->"New",ExpressionUUID->"47fef67b-aca0-504f-8176-adebb98c443e"],
  " | Modified in: ",
  Cell[" ", "HistoryData",
@@ -2245,7 +2231,7 @@ Cell[CellGroupData[{
 Cell["Keywords", "KeywordsSection",
  CellID->548651282,ExpressionUUID->"bcc57377-2bb0-5e4c-820c-6f9493cbd747"],
 
-Cell["XXXX", "Keywords",
+Cell["HTML, DOM, element, jsoup", "Keywords",
  CellID->66117818,ExpressionUUID->"d40c7a48-9c76-9842-bbc0-5da811711f39"]
 }, Closed]],
 
@@ -2463,4 +2449,3 @@ Cell[110341, 2268, 137, 2, 29, "Template",ExpressionUUID->"ca7b600d-c3a9-274a-8f
 }
 ]
 *)
-

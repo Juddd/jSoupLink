@@ -376,7 +376,7 @@ Cell["Metadata", "MetadataSection",
 
 Cell[TextData[{
  "New in: ",
- Cell["XX", "HistoryData",
+ Cell["1.1.0", "HistoryData",
   CellTags->"New",ExpressionUUID->"84b13c1d-b874-6c45-ba7e-74a6d059290b"],
  " | Modified in: ",
  Cell[" ", "HistoryData",
@@ -426,7 +426,7 @@ Cell[CellGroupData[{
 Cell["Keywords", "KeywordsSection",
  CellID->715914262,ExpressionUUID->"dd4d5f8c-4365-ee49-bfbe-9ddf84ff8eaa"],
 
-Cell["XXXX", "Keywords",
+Cell["HTML, DOM, CSS selectors, jsoup", "Keywords",
  CellID->94055497,ExpressionUUID->"6115cc69-2cff-1c48-8007-798645d80996"]
 }, Closed]],
 

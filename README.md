@@ -2,7 +2,7 @@
 
 Created by Calle Ekdahl.
 
-GPL-2.0+ licensed.
+GPL-2.0-or-later licensed.
 
 Current version: 1.1.0
 
@@ -15,9 +15,9 @@ While traditionally HTML has been worked on in Mathematica by importing it as sy
 The most common application for jsoupLink is to extract information from websites, for example table data.
 
 ## Installing jsoupLink
-`jsoupLink` is distributed in the form of a paclet. Download the latest version of the paclet from [the releases page](https://github.com/cekdahl/jsoupLink/releases) and install it using `PacletInstall`:
+`jsoupLink` is distributed in the form of a paclet. Download version 1.1.0 from [the releases page](https://github.com/Juddd/jSoupLink/releases) and install it using `PacletInstall`:
 
-    PacletInstall["~/Downloads/jSoupLink-1.0.0.paclet"]
+    PacletInstall["~/Downloads/jsoupLink-1.1.0.paclet"]
 
 Use `Needs` to load jsoupLink:
 
@@ -200,7 +200,7 @@ Return a copy of `element`, such that modifications done to the copy do not affe
 
 ## Helper functions
 
-jsonLink includes a selection of helper functions that evaluate properties on HTML element objects.
+jsoupLink includes a selection of helper functions that evaluate properties on HTML element objects. The original property syntax remains supported; these functions are convenient wrappers around it.
 
 - `HTMLSelect[rootElement, selector]` returns the elements that match the CSS selector.
 - `HTMLSelect[selector]` represents an operator form of HTMLSelect that can be applied to an element.
@@ -212,6 +212,7 @@ jsonLink includes a selection of helper functions that evaluate properties on HT
 - `HTMLSiblings[element]` returns the list of siblings of the element.
 - `HTMLOwnText[element]` returns the text directly under the element, i.e. not nested in a child. The own text of `<h1>Hello <b>world</b></h1>` is `Hello`.
 - `HTMLAllText[element]` returns all text under the element. Applied to `<h1>Hello <b>world</b></h1>` it would return `Hello world`.
+- `HTMLTree[element]` opens the same DOM tree interface as `element["DOMTree"]`.
 
 ## DOM Tree Interface
 `element["DOMTree"]` opens an interface to view the DOM tree with `element` as root:
@@ -226,10 +227,11 @@ If you are having problem retrieving absolute URLs from links, you may try to re
 
 ## Building jsoupLink from source
 
-The jsoupLink paclet can be built from source using the `CreatePacletArchive` function:
+Run `./scripts/build.wls` from the repository root. The script uses `PacletBuild` and verifies the manifest, extracted archive, bundled jsoup JAR, documentation, and entry-file names. See [BUILD.md](BUILD.md) for build and isolated-install test instructions.
 
-```mathematica
-CreatePacletArchive[sourceDir, destDir]
-```
+Version 1.1.0 bundles jsoup 1.23.1 from Maven Central:
 
-`sourceDir` is the directory with the `PacletInfo.wl` in it, and `destDir` is where the paclet file will be saved to.
+- SHA-1: `0c0350bb325da274f0508349109516a7855d01ab`
+- SHA-256: `8b15e2b28eeb1e0a88a9b7dab4dc0c23524491c56959785dea22f7846897b668`
+
+jsoupLink is licensed under GPL-2.0-or-later. The bundled jsoup dependency is MIT-licensed; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

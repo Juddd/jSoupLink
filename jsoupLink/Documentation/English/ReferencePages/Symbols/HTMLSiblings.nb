@@ -118,56 +118,6 @@ Cell[TextData[{
 Cell[CellGroupData[{
 
 Cell[TextData[{
- "Tech Notes",
- Cell[BoxData[
-  TemplateBox[{"TechNotes", 
-    Cell[
-     BoxData[
-      FrameBox[
-       Cell["Insert links to related tech notes.", "MoreInfoText"], BaseStyle -> 
-       "IFrameBox"]], "MoreInfoTextOuter"]},
-   "MoreInfoOpenerButtonTemplate"]],ExpressionUUID->
-  "eff84d74-e643-a14c-aeac-15708f412e29"]
-}], "TechNotesSection",
- CellID->5955648,ExpressionUUID->"2ac13b64-146d-4c4a-84a2-d600d3b62c30"],
-
-Cell["XXXX", "Tutorials",
- CellID->370962385,ExpressionUUID->"cc3e83ac-c20d-8340-ad94-829be8b0f2d8"]
-}, Open  ]],
-
-Cell[CellGroupData[{
-
-Cell["Related Guides", "MoreAboutSection",
- CellID->609830654,ExpressionUUID->"63b516e4-e81e-bf4d-a828-ee85221e56bc"],
-
-Cell["XXXX", "MoreAbout",
- CellID->175874170,ExpressionUUID->"050a3100-53fd-744a-a47f-48b5ef23cb90"]
-}, Open  ]],
-
-Cell[CellGroupData[{
-
-Cell[TextData[{
- "Related Links",
- Cell[BoxData[
-  TemplateBox[{"RelatedLinks", 
-    Cell[
-     BoxData[
-      FrameBox[
-       Cell[
-       "Insert links to any related page, including web pages.", 
-        "MoreInfoText"], BaseStyle -> "IFrameBox"]], "MoreInfoTextOuter"]},
-   "MoreInfoOpenerButtonTemplate"]],ExpressionUUID->
-  "047437c6-dff1-b84e-905d-837f115ec6fb"]
-}], "RelatedLinksSection",
- CellID->21716576,ExpressionUUID->"62f8b3d8-e134-7c4b-a316-da3d03af528b"],
-
-Cell["XXXX", "RelatedLinks",
- CellID->101601218,ExpressionUUID->"37540d43-2680-154b-b21e-d618d0d48a17"]
-}, Open  ]],
-
-Cell[CellGroupData[{
-
-Cell[TextData[{
  "Examples Initialization",
  Cell[BoxData[
   TemplateBox[{"ExamplesInitialization", 
@@ -240,21 +190,7 @@ Cell[BoxData[
   "Options", "ExampleSection",ExpressionUUID->
    "d77a7579-6055-cf45-80c7-8aafefbab779"],
   $Line = 0; Null]], "ExampleSection",
- CellID->165514656,ExpressionUUID->"1bfee2a1-626d-f446-8703-cca9ed3ad54b"],
-
-Cell[BoxData[
- InterpretationBox[Cell[
-  "XXXX", "ExampleSubsection",ExpressionUUID->
-   "55eb1cd6-220e-984e-bf7c-e3f0dc63adc2"],
-  $Line = 0; Null]], "ExampleSubsection",
- CellID->249874851,ExpressionUUID->"43e49fcf-b30c-ac4f-8bba-2f0bda04324f"],
-
-Cell[BoxData[
- InterpretationBox[Cell[
-  "XXXX", "ExampleSubsection",ExpressionUUID->
-   "0d2423bf-7a51-4e44-bf7a-99e6ed838c81"],
-  $Line = 0; Null]], "ExampleSubsection",
- CellID->462567698,ExpressionUUID->"402d008a-e968-7d4e-a962-c93a98c75ec6"]
+ CellID->165514656,ExpressionUUID->"1bfee2a1-626d-f446-8703-cca9ed3ad54b"]
 }, Open  ]],
 
 Cell[BoxData[
@@ -300,7 +236,7 @@ Cell["Metadata", "MetadataSection",
 
 Cell[TextData[{
  "New in: ",
- Cell["XX", "HistoryData",
+ Cell["1.1.0", "HistoryData",
   CellTags->"New",ExpressionUUID->"912f7cfa-55cf-b342-b959-ec10336927cc"],
  " | Modified in: ",
  Cell[" ", "HistoryData",
@@ -350,7 +286,7 @@ Cell[CellGroupData[{
 Cell["Keywords", "KeywordsSection",
  CellID->240718562,ExpressionUUID->"7df65b2f-190e-9849-bb68-fdc97b147ec1"],
 
-Cell["XXXX", "Keywords",
+Cell["HTML, DOM, sibling elements, jsoup", "Keywords",
  CellID->48436004,ExpressionUUID->"3e355e28-e4ea-8c4e-bf6d-3e467ffc8205"]
 }, Closed]],
 
@@ -510,4 +446,3 @@ Cell[12318, 373, 137, 2, 70, "Template",ExpressionUUID->"12d2aace-4241-9243-8c67
 }
 ]
 *)
-

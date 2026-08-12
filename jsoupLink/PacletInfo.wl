@@ -12,8 +12,8 @@ PacletObject[
         "Root" -> "Kernel",
         "Context" -> "jsoupLink`",
         "Symbols" -> {
-          "jsoupLink`HTMLElement",
-          "jsoupLink`Select",
+          "Global`HTMLElement",
+          "jsoupLink`HTMLSelect",
           "jsoupLink`HTMLAttribute",
           "jsoupLink`HTMLAttributes",
           "jsoupLink`HTMLParent",
@@ -25,6 +25,11 @@ PacletObject[
         }
       },
       {"JLink"},
+      {
+        "Asset",
+        "Root" -> "Java",
+        "Assets" -> {{"jsoupJar", "jsoup-1.23.1.jar"}}
+      },
       {
         "Documentation",
         "Root" -> "Documentation",

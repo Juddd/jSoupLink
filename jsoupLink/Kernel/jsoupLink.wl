@@ -5,9 +5,9 @@
 (* :Title: jsoupLink                       *)
 (* :Context: jsoupLink`                    *)
 (* :Author: Calle Ekdahl                   *)
-(* :Date: 2024-05-09                       *)
+(* :Date: 2026-08-12                       *)
 
-(* :Package Version: 1.1                   *)
+(* :Package Version: 1.1.0                 *)
 (* :Mathematica Version: 12.3.0.0          *)
 (* :Copyright: (c) 2015-2024 Calle Ekdahl  *)
 (* :Keywords:                              *)
@@ -23,14 +23,15 @@ HTMLAttributes::usage = "HTMLAttributes[element] returns the attributes of the e
 HTMLParent::usage = "HTMLParent[element] returns the parent of the element.";
 HTMLChildren::usage = "HTMLChildren[element] returns the list of children of the element.";
 HTMLSiblings::usage = "HTMLSiblings[element] returns the list of siblings of the element.";
-HTMLOwnText::usage = "OwnText[element] returns the text directly under the element, i.e. not nested in a child. The own text of <h1>Hello <b>world</b></h1> is \"Hello\".";
-HTMLAllText::usage = "AllText[element] returns all text under the element. Applied to <h1>Hello <b>world</b></h1> it would return \"Hello world\".";
+HTMLOwnText::usage = "HTMLOwnText[element] returns the text directly under the element, i.e. not nested in a child. The own text of <h1>Hello <b>world</b></h1> is \"Hello\".";
+HTMLAllText::usage = "HTMLAllText[element] returns all text under the element. Applied to <h1>Hello <b>world</b></h1> it would return \"Hello world\".";
+HTMLTree::usage = "HTMLTree[element] opens an interactive DOM tree for the element. It is equivalent to element[\"DOMTree\"].";
 
 Begin["`Private`"]; (* Begin Private Context *)
 
 Needs["JLink`"];
 InstallJava[];
-AddToClassPath[FileNameJoin[{DirectoryName[$InputFileName], "Java"}]];
+AddToClassPath[FileNameJoin[{DirectoryName[DirectoryName[$InputFileName]], "Java", "jsoup-1.23.1.jar"}]];
 LoadJavaClass["org.jsoup.Jsoup"];
 
 ImportExport`RegisterImport["HTMLDOM", jsoupLink`DownloadDOM];
@@ -165,6 +166,7 @@ HTMLChildren[el_Global`HTMLElement] := el["Children"];
 HTMLSiblings[el_Global`HTMLElement] := el["Siblings"];
 HTMLOwnText[el_Global`HTMLElement] := el["OwnText"];
 HTMLAllText[el_Global`HTMLElement] := el["AllText"];
+HTMLTree[el_Global`HTMLElement] := el["DOMTree"];
 
 (* DOM Tree *)
 colors = <|
@@ -347,6 +349,4 @@ popup[el_, opts: OptionsPattern[]] := CreateDocument[tree[el, opts],
 End[]; (* End Private Context *)
 
 EndPackage[]
-
-
 

@@ -39,10 +39,10 @@ websites, for example table data.\nTo get started, import an HTML document \
 using Import[url, \"HTMLDOM\"]. This will retrieve an ",
  ButtonBox["HTMLElement",
   BaseStyle->"Link",
-  ButtonData->"paclet:CalleEkdahl/jsoupLink/ref/HTMLElement"],
+  ButtonData->"paclet:jsoupLink/ref/HTMLElement"],
  " object, around which all functionality revolves (read the corresponding \
 reference page for more information).\nAdditional documentation is available \
-on Github: https://github.com/cekdahl/jSoupLink"
+on Github: https://github.com/Juddd/jSoupLink"
 }], "GuideAbstract",
  CellChangeTimes->{{3.9244218452024817`*^9, 3.924421923931122*^9}, {
   3.9244220009129086`*^9, 3.924422226018102*^9}, {3.925732401074396*^9, 
@@ -213,40 +213,12 @@ Cell[TextData[{
 
 Cell[CellGroupData[{
 
-Cell["Tech Notes", "GuideTutorialsSection",
- CellID->371632104,ExpressionUUID->"1c5a3cba-da5e-fd41-aeed-83bd53b5c011"],
-
-Cell["XXXX", "GuideTutorial",
- CellID->1138326452,ExpressionUUID->"63a33339-5227-124b-a3e9-6b257f0ff051"],
-
-Cell["XXXX", "GuideTutorial",
- CellID->2068351288,ExpressionUUID->"06a82ecf-f2b0-9d4b-8965-6e41ea844691"]
-}, Open  ]],
-
-Cell[CellGroupData[{
-
-Cell["Related Guides", "GuideMoreAboutSection",
- CellChangeTimes->{{3.843042393936669*^9, 3.843042395176153*^9}},
- CellID->1462303427,ExpressionUUID->"374105ed-0b33-b448-aef5-c1a154f7c1be"],
-
-Cell["XXXX", "GuideMoreAbout",
- CellID->1130841321,ExpressionUUID->"eb4a32c4-35f6-5d43-82e7-7d3bc82e3abe"],
-
-Cell["XXXX", "GuideMoreAbout",
- CellID->819806097,ExpressionUUID->"b07b29aa-b08b-fc46-aea2-fffe45f05fb8"]
-}, Open  ]],
-
-Cell["Related Links", "GuideRelatedLinksSection",
- CellID->225993127,ExpressionUUID->"5290497b-09fc-3148-9069-01dc52b2db13"],
-
-Cell[CellGroupData[{
-
 Cell["Metadata", "MetadataSection",
  CellID->4930521,ExpressionUUID->"b01c6f80-b67e-3145-ab8e-5c477ec811ab"],
 
 Cell[TextData[{
  "New in: ",
- Cell["XX", "HistoryData",
+ Cell["1.0.0", "HistoryData",
   CellTags->"New",ExpressionUUID->"c6e472df-22bb-5b41-bf13-95c57aecb190"],
  " | Modified in: ",
  Cell[" ", "HistoryData",
@@ -290,7 +262,7 @@ Cell[CellGroupData[{
 Cell["Keywords", "KeywordsSection",
  CellID->171085774,ExpressionUUID->"4e189f6a-86d7-d840-9ccf-7630149d9bf0"],
 
-Cell["XXXX", "Keywords",
+Cell["HTML, DOM, parsing, jsoup", "Keywords",
  CellID->634591766,ExpressionUUID->"5addf269-6750-0b4e-b8e5-c63f583e6b1e"]
 }, Open  ]]
 }, Open  ]]
@@ -394,4 +366,3 @@ Cell[11832, 292, 99, 1, 21, "Keywords",ExpressionUUID->"5addf269-6750-0b4e-b8e5-
 }
 ]
 *)
-
