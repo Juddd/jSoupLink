@@ -1,5 +1,43 @@
 # Errors
 
+## [ERR-20260812-013] gh repo fork boolean flag
+
+**Logged**: 2026-08-12T17:10:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: infra
+
+### Summary / 摘要
+
+本机 GitHub CLI 不支持显式仓库参数与 `--remote=false` 的组合，fork 命令在执行前返回用法错误。
+
+### Error
+
+```text
+the `--remote` flag is unsupported when a repository argument is provided
+```
+
+### Context / 背景
+
+- `Juddd/jSoupLink` 尚未创建，现有远端没有被改写。
+- 当前 CLI 帮助表明显式仓库 fork 时省略 `--remote` 即不会要求添加远端。
+
+### Suggested Fix / 修复
+
+使用 `gh repo fork cekdahl/jSoupLink --clone=false`，创建完成后由 Git 手工重命名和添加远端。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: .git/config
+
+### Resolution
+
+- **Resolved**: 2026-08-12T17:10:00+08:00
+- **Notes**: 改用本机 CLI 支持的参数组合。
+
+---
+
 ## [ERR-20260812-001] MUnit context assertion
 
 **Logged**: 2026-08-12T14:03:00+08:00
