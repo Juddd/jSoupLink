@@ -1,5 +1,43 @@
 # Errors
 
+## [ERR-20260814-013] gh release view does not expose isLatest
+
+**Logged**: 2026-08-14T02:49:33+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: infra
+
+### Summary / 摘要
+
+当前 GitHub CLI 的 `gh release view --json` 不支持 `isLatest` 字段，导致包含该字段的发布后汇总命令在资产下载和校验已经成功后返回非零。
+
+### Error / 错误
+
+```text
+Unknown JSON field: "isLatest"
+```
+
+### Context / 背景
+
+- `gh release download` 已成功下载两个 1.1.1 资产，`sha256sum -c` 也已经通过。
+- 失败只发生在随后请求 Release 元数据的字段列表，不影响发布或资产完整性。
+
+### Suggested Fix / 修复
+
+用 `gh release view` 查询其当前支持的字段；latest 状态由 GitHub MCP 的 `get_latest_release` 独立核对。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: PROJECT_STATE.md
+
+### Resolution / 解决
+
+- **Resolved**: 2026-08-14T02:49:33+08:00
+- **Notes**: 去掉不支持的字段后重跑成功，并由 GitHub MCP 确认 1.1.1 是当前 latest release。
+
+---
+
 ## [ERR-20260813-002] cua-driver text input passed through the active IME
 
 **Logged**: 2026-08-13T02:35:00+08:00

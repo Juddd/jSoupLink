@@ -2,7 +2,7 @@
 
 ## Goal / 目标
 
-在已发布的 1.1.0 维护基线上实现 DOM 树文本搜索，完成 `jsoupLink` 1.1.1 的构建、隔离安装和 Wolfram 15.0/Linux FrontEnd 发布前验收。
+在已发布的 1.1.0 维护基线上实现 DOM 树文本搜索，完成 `jsoupLink` 1.1.1 的构建、隔离安装、Wolfram 15.0/Linux FrontEnd 验收和 GitHub 发布。
 
 ## Progress / 当前进度
 
@@ -23,7 +23,7 @@
 - 当前候选修复将搜索框显式设为可编辑、可选择并持续回写，移除 `FinishDynamic[]` 强制同步，同时不再覆盖 `WindowElements`，保留普通文档窗口的默认键盘命令环境；用户已确认真实剪贴板恢复。
 - 本轮按 Wolfram 15 本机文档将整个交互 `Panel` 包入 `Deploy`：一般 notebook 编辑和内容选择被禁止，但 `InputField`、`Button` 等控件保持活动。窗口本身仍为 `Deployed -> False, Editable -> True, Selectable -> True`，因此菜单命令和输入框不受损。
 - 当前候选已构建并通过两条隔离安装及用户真实鼠标验收。
-- Paclet 元数据、README、BUILD 和隔离安装脚本已统一到 1.1.1；尚未提交或发布。
+- Paclet 元数据、README、BUILD 和隔离安装脚本已统一到 1.1.1；发布提交、维护分支、`master`、annotated tag 和 GitHub Release 均已完成。
 
 ## Decisions / 关键决定
 
@@ -62,10 +62,13 @@
 - fork：`https://github.com/Juddd/jSoupLink`；Release：`https://github.com/Juddd/jSoupLink/releases/tag/1.1.0`。
 - GitHub 重新下载的 Release 资产通过 `.sha256` 校验；远端 digest 与本地计算均为 `8d1028548b35c4fd995029982bd7ca42e68758605baad6146e485c99edfe21d0`，`.paclet` 大小为 683533 bytes。
 - 远端 `master`、`maint/1.1.0` 和 tag `1.1.0` 在发布时均指向 `02b28f3f15cf0f6e438cd9d04fe87d0c33c507ee`；tag 保持在发布提交，后续状态记录作为 tag 后 bookkeeping。
+- 1.1.1 发布提交为 `e889732eaf2a5587ea203ac6ad949860b062db36`；发布时远端 `master`、`maint/1.1.1` 和 tag `1.1.1` 均解析到该提交，tag 保持在发布提交，后续状态记录作为 tag 后 bookkeeping。
+- GitHub Release：`https://github.com/Juddd/jSoupLink/releases/tag/1.1.1`，为正式、非草稿、非预发布且当前 latest release。两个资产均已通过 GitHub MCP 回读：paclet 为 685,239 bytes，服务器 digest 为 `sha256:7cb42da4c10e54faf7329749ea815a0906f99319c1a829ef25ab31ffc7edc125`；校验文件为 89 bytes。
+- 从 GitHub 重新下载 `jsoupLink-1.1.1.paclet` 和 `.sha256` 到独立临时目录后，`sha256sum -c` 通过，下载文件的 SHA-256 与本地候选和服务器 digest 完全一致。
 
 ## Next / 下一步
 
-- 提交并推送 `maint/1.1.1` 和 `master`，创建 `1.1.1` tag 与 GitHub Release，上传 paclet 和 SHA-256 校验文件并回下载验证。
+- 1.1.1 发布目标已完成；后续维护从 tag `1.1.1` 之后的新版本分支开始。
 
 ## Blockers / 阻塞项
 
