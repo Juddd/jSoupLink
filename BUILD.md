@@ -1,4 +1,4 @@
-# Building jsoupLink 1.1.0
+# Building jsoupLink 1.1.1
 
 The supported build environment is Wolfram Language 12.3 or later with the `PacletTools` paclet. The release artifact is produced by one command from the repository root:
 
@@ -6,12 +6,12 @@ The supported build environment is Wolfram Language 12.3 or later with the `Pacl
 ./scripts/build.wls
 ```
 
-The script calls `PacletBuild` once and writes the result to `build/jsoupLink-1.1.0.paclet`. It fails unless the manifest and extracted archive contain all required package, Java, icon, and documentation files. It also verifies that the archived jsoup JAR has the same SHA-256 hash as the source JAR and rejects obsolete entry files or JAR versions.
+The script calls `PacletBuild` once and writes the result to `build/jsoupLink-1.1.1.paclet`. It fails unless the manifest and extracted archive contain all required package, Java, icon, and documentation files. It also verifies that the archived jsoup JAR has the same SHA-256 hash as the source JAR and rejects obsolete entry files or JAR versions.
 
 Run the source regression suite with:
 
 ```bash
-WolframKernel -noinit -noprompt -run 'report=TestReport["Tests/jsoupLink.wlt"]; success=Length[report["TestsSucceededKeys"]]; failed=Total[Length[report[#]]&/@{"TestsFailedWrongResultsKeys","TestsFailedWithMessagesKeys","TestsNotEvaluatedKeys"}]; Print[<|"Succeeded"->success,"FailedOrSkipped"->failed|>]; If[success===32&&failed===0,Exit[0],Exit[1]]'
+WolframKernel -noinit -noprompt -run 'report=TestReport["Tests/jsoupLink.wlt"]; success=Length[report["TestsSucceededKeys"]]; failed=Total[Length[report[#]]&/@{"TestsFailedWrongResultsKeys","TestsFailedWithMessagesKeys","TestsNotEvaluatedKeys"}]; Print[<|"Succeeded"->success,"FailedOrSkipped"->failed|>]; If[success===68&&failed===0,Exit[0],Exit[1]]'
 ```
 
 Run the final archive through a fresh, isolated user paclet repository with:

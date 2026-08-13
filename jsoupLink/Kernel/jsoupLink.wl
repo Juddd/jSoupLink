@@ -7,7 +7,7 @@
 (* :Author: Calle Ekdahl                   *)
 (* :Date: 2026-08-12                       *)
 
-(* :Package Version: 1.1.0                 *)
+(* :Package Version: 1.1.1                 *)
 (* :Mathematica Version: 12.3.0.0          *)
 (* :Copyright: (c) 2015-2024 Calle Ekdahl  *)
 (* :Keywords:                              *)
@@ -121,7 +121,7 @@ Global`HTMLElement[el_]["Wrap", html_] := Global`HTMLElement[el@wrap[html]];
 Global`HTMLElement[el_]["Unwrap", html_] := With[{p=el@parent[]}, el@unwrap[]; Global`HTMLElement[p]];
 Global`HTMLElement[el_]["Clean"] := Global`HTMLElement[el@html[Jsoup`clean[el@html[]]]];
 Global`HTMLElement[el_]["DeepCopy"] := Global`HTMLElement[JavaBlock[el@clone[]]];
-Global`HTMLElement[el_]["DOMTree"] := CreateDialog[tree[el]];
+Global`HTMLElement[el_]["DOMTree"] := popup[el];
 
 properties = {"TagName", "Root", "Parent", "Children", "Siblings",
   "Select", "AllElements", "Value", "InnerHTML", "OuterHTML",
@@ -180,6 +180,7 @@ colors = <|
     "url" -> RGBColor[{47, 82, 203}/255 // N],
     "text" -> RGBColor[{54, 60, 68}/255 // N],
     "highlight" -> RGBColor[{236, 241, 252}/255 // N],
+    "searchSelected" -> <|"background" -> RGBColor[{255, 248, 196}/255 // N]|>,
     "selected" -> <|
         "background" -> RGBColor[{79, 118, 216}/255 // N],
         "tag" -> RGBColor[{1, 1, 1}],
@@ -260,73 +261,219 @@ elementAttributes[el_] := Module[{attrs},
 
 elementChildren[el_] := el@childNodes[]@toArray[];
 
-attachEventHandler[element_, root_, ID_] := Item[
+attachEventHandler[element_, root_, ID_, refreshTree_] := Item[
   EventHandler[element, {
-    {"MouseClicked", 1} :> If[
-      root["selected"] === ID,
-      root["selected"] = Null,
-      root["selected"] = ID
-    ]
-  }, PassEventsDown -> True],
+    {"MouseClicked", 1} :> (
+      root["searchSelected"] = Null;
+      If[sameNodeQ[root["selected"], ID], root["selected"] = Null, root["selected"] = ID];
+      refreshTree[]
+    )
+  }, Method -> "Queued", PassEventsDown -> True],
   Alignment -> Left,
-  If[root["selected"] === ID,
-    Background -> colors["selected", "background"],
+  If[sameNodeQ[root["selected"], ID],
+    Background -> If[sameNodeQ[root["searchSelected"], ID], colors["searchSelected", "background"], colors["selected", "background"]],
     ## &[]
   ]
 ] /; InstanceOf[ID, "org.jsoup.nodes.Element"];
 
-attachEventHandler[el_, root_, ID_] /; InstanceOf[ID, "org.jsoup.nodes.TextNode"] := Item[el, Alignment -> Left];
-attachEventHandler[Nothing[], root_, ID_] /; InstanceOf[ID, "org.jsoup.nodes.TextNode"] := Nothing;
-attachEventHandler[el_, root_, ID_] /; InstanceOf[ID, "org.jsoup.nodes.DataNode"] := Item[el, Alignment -> Left];
+attachEventHandler[el_, root_, ID_, _] /; InstanceOf[ID, "org.jsoup.nodes.TextNode"] := Item[
+  el,
+  Alignment -> Left,
+  If[domTreeSearchTextNodeQ[root, ID], Background -> colors["searchSelected", "background"], ## &[]]
+];
+attachEventHandler[Nothing[], root_, ID_, _] /; InstanceOf[ID, "org.jsoup.nodes.TextNode"] := Nothing;
+attachEventHandler[el_, root_, ID_, _] /; InstanceOf[ID, "org.jsoup.nodes.DataNode"] := Item[el, Alignment -> Left];
 
-SetAttributes[CustomPaneSelector, HoldRest];
-CustomPaneSelector[x_, true_, false_] := If[x, true, false];
+sameNodeQ[node1_, node2_] := JavaObjectQ[node1] && JavaObjectQ[node2] && TrueQ[SameObjectQ[node1, node2]];
 
-SetAttributes[CustomOpenerView, HoldFirst];
-CustomOpenerView[{heading_, content_, prolog_, epilog_}, root_, ID_, state_] := DynamicModule[{x = state},
-  Dynamic@CustomPaneSelector[x,
-    Grid[{
-      {Opener[Dynamic[x, (root[ID] = x = #) &]], attachEventHandler[prolog, root, ID]},
-      {"", Item[content, Alignment -> Left]},
-      {"", attachEventHandler[epilog, root, ID]}
-    }],
-    Grid[{
-      {Opener[Dynamic[x, (root[ID] = x = #) &]], attachEventHandler[heading, root, ID]}
-    }]
+domTreeCurrentMatch[root_] := If[
+  ListQ[root["matches"]] && IntegerQ[root["current"]] && 1 <= root["current"] <= Length[root["matches"]],
+  root["matches"][[root["current"]]],
+  Missing["NotFound"]
+];
+
+domTreeSearchElementQ[root_, node_] := With[{match = domTreeCurrentMatch[root]}, AssociationQ[match] && sameNodeQ[root["searchSelected"], match["Element"]] && sameNodeQ[match["Element"], node]];
+domTreeSearchTextNodeQ[root_, node_] := With[{match = domTreeCurrentMatch[root]}, AssociationQ[match] && sameNodeQ[root["searchSelected"], match["Element"]] && sameNodeQ[match["TextNode"], node]];
+
+domTreeDescendants[node_] := Prepend[Flatten[domTreeDescendants /@ elementChildren[node]], node];
+
+domTreeSearchMatches[el_, query_String] := Module[{textNodes, matchingNodes},
+  If[StringTrim[query] === "", Return[{}]];
+  textNodes = Select[domTreeDescendants[el], InstanceOf[#, "org.jsoup.nodes.TextNode"] && !StringMatchQ[#@text[], Whitespace] &];
+  matchingNodes = Select[textNodes, StringContainsQ[#@text[], query, IgnoreCase -> True] &];
+  Fold[
+    Function[{matches, textNode},
+      With[{element = textNode@parent[]},
+        If[AnyTrue[matches, sameNodeQ[#Element, element] &], matches, Append[matches, <|"Element" -> element, "TextNode" -> textNode|>]]
+      ]
+    ],
+    {}, matchingNodes
   ]
 ];
 
-renderElement[el_, root_, ID_, state_] := If[
-  Length@elementChildren[el] > 0,
-  CustomOpenerView[{
-    If[root["selected"] === ID, elementDescription[el, cs], elementDescription[el]],
-    Column[renderElement[#, root, #, root@#] & /@ el@childNodes[]@toArray[]],
-    If[root["selected"] === ID, elementOpen[el, cs], elementOpen[el]],
-    If[root["selected"] === ID, elementClose[el, cs], elementClose[el]]
-  }, root, ID, state],
-  attachEventHandler[If[root["selected"] === ID, elementDescription[el, cs], elementDescription[el]], root, ID]
+domTreePath[el_, target_] := Module[{node = target, path = {}},
+  While[node =!= Null,
+    AppendTo[path, node];
+    If[sameNodeQ[node, el], Break[]];
+    node = node@parent[]
+  ];
+  If[path =!= {} && sameNodeQ[Last[path], el], path, {}]
 ];
+
+domTreeVisibleRows[node_, openQ_, depth_:0] /; InstanceOf[node, "org.jsoup.nodes.Element"] := Module[{children = elementChildren[node]},
+  If[children === {},
+    {<|"Kind" -> "Element", "Node" -> node, "Depth" -> depth|>},
+    If[TrueQ@openQ[node],
+      Join[
+        {<|"Kind" -> "Open", "Node" -> node, "Depth" -> depth|>},
+        Flatten[domTreeVisibleRows[#, openQ, depth + 1] & /@ children],
+        {<|"Kind" -> "Close", "Node" -> node, "Depth" -> depth|>}
+      ],
+      {<|"Kind" -> "Summary", "Node" -> node, "Depth" -> depth|>}
+    ]
+  ]
+];
+domTreeVisibleRows[node_, _, depth_:0] /; InstanceOf[node, "org.jsoup.nodes.TextNode"] := If[
+  StringMatchQ[node@text[], Whitespace], {}, {<|"Kind" -> "Text", "Node" -> node, "Depth" -> depth|>}
+];
+domTreeVisibleRows[node_, _, depth_:0] /; InstanceOf[node, "org.jsoup.nodes.DataNode"] := {<|"Kind" -> "Data", "Node" -> node, "Depth" -> depth|>};
+domTreeVisibleRows[_, _, ___] := {};
+
+domTreeRowHeight[fontSize_] := Max[18, fontSize + 6];
+
+domTreeRowBackground[row_, root_] := Module[{kind = row["Kind"], node = row["Node"]},
+  Which[
+    MemberQ[{"Open", "Summary", "Element"}, kind] && domTreeSearchElementQ[root, node], colors["searchSelected", "background"],
+    kind === "Text" && domTreeSearchTextNodeQ[root, node], colors["searchSelected", "background"],
+    domTreeSearchElementQ[root, node], None,
+    InstanceOf[node, "org.jsoup.nodes.Element"] && sameNodeQ[root["selected"], node], colors["selected", "background"],
+    True, None
+  ]
+];
+
+setDOMTreeNodeOpen[root_, node_, value_, refreshTree_] := (
+  root[node] = TrueQ[value];
+  refreshTree[];
+  Null
+);
+
+domTreeOpener[root_, node_, refreshTree_] := With[{targetNode = node},
+  Opener[Dynamic[TrueQ[root[targetNode]], (setDOMTreeNodeOpen[root, targetNode, #, refreshTree]) &]]
+];
+
+renderDOMTreeRow[row_, root_, refreshTree_] := Module[{kind = row["Kind"], node = row["Node"], indent, opener, content},
+  indent = Spacer[row["Depth"] 18];
+  opener = If[MemberQ[{"Open", "Summary"}, kind],
+    domTreeOpener[root, node, refreshTree],
+    Spacer[12]
+  ];
+  content = Switch[kind,
+    "Open", attachEventHandler[If[sameNodeQ[root["selected"], node] && !domTreeSearchElementQ[root, node], elementOpen[node, cs], elementOpen[node]], root, node, refreshTree],
+    "Close", attachEventHandler[If[sameNodeQ[root["selected"], node] && !domTreeSearchElementQ[root, node], elementClose[node, cs], elementClose[node]], root, node, refreshTree],
+    "Summary" | "Element", attachEventHandler[If[sameNodeQ[root["selected"], node] && !domTreeSearchElementQ[root, node], elementDescription[node, cs], elementDescription[node]], root, node, refreshTree],
+    "Text" | "Data", attachEventHandler[elementDescription[node], root, node, refreshTree]
+  ];
+  Item[
+    Pane[Row[{indent, opener, content}, BaselinePosition -> Baseline], ImageSize -> {Automatic, root["rowHeight"]}, Alignment -> {Left, Center}],
+    Alignment -> Left,
+    Background -> domTreeRowBackground[row, root]
+  ]
+];
+
+renderDOMTreeRows[rows_, root_, refreshTree_] := Grid[List /@ (renderDOMTreeRow[#, root, refreshTree] & /@ rows), Alignment -> Left, Spacings -> {0, 0}];
+
+domTreeResultLabel[root_] := If[root["matches"] === {}, "0 / 0", ToString[root["current"]] <> " / " <> ToString[Length@root["matches"]]];
+
+setDOMTreeEventMode[root_, showSearch_] := SetOptions[root["notebook"], NotebookEventActions -> {
+  {"MenuCommand", "FindExpression"} :> beginDOMTreeSearch[root, showSearch]
+}];
+
+beginDOMTreeSearch[root_, showSearch_] := (
+  showSearch[True];
+  FrontEnd`MoveCursorToInputField[root["notebook"], "jsoupLinkDOMTreeSearch"]
+);
+
+selectDOMTreeMatch[root_, index_Integer, refreshTree_:(Null &)] := Module[{count = Length@root["matches"], match, path, rows, rowPosition},
+  If[count === 0, Return[Null]];
+  root["current"] = Mod[index - 1, count] + 1;
+  match = root["matches"][[root["current"]]];
+  root["selected"] = match["Element"];
+  root["searchSelected"] = match["Element"];
+  path = domTreePath[root["treeRoot"], match["Element"]];
+  Scan[(root[#] = True) &, path];
+  rows = domTreeVisibleRows[root["treeRoot"], TrueQ[root[#]] &];
+  rowPosition = FirstPosition[rows, row_ /; sameNodeQ[row["Node"], match["TextNode"]], Missing["NotFound"]];
+  If[!MissingQ[rowPosition], root["scrollPosition"] = {0, Max[0, (First[rowPosition] - 3) root["rowHeight"]]}];
+  refreshTree[];
+  Null
+];
+
+submitDOMTreeSearch[root_, refreshTree_:(Null &)] := (
+  root["matches"] = domTreeSearchMatches[root["treeRoot"], root["query"]];
+  If[root["matches"] === {},
+    root["current"] = 0;
+    root["selected"] = Null;
+    root["searchSelected"] = Null;
+    refreshTree[],
+    selectDOMTreeMatch[root, 1, refreshTree]
+  ];
+  Null
+);
+submitDOMTreeSearch[root_, query_String, refreshTree_:(Null &)] := (root["query"] = query; submitDOMTreeSearch[root, refreshTree]);
+
+navigateDOMTreeSearch[root_, delta_Integer, refreshTree_:(Null &)] := If[root["matches"] =!= {}, selectDOMTreeMatch[root, root["current"] + delta, refreshTree], Null];
+
+initializeDOMTree[root_, showSearch_] := (
+  root["notebook"] = EvaluationNotebook[];
+  setDOMTreeEventMode[root, showSearch]
+);
 
 Options[tree] = {
   "Width" -> 1400,
   "Height" -> 480,
   "FontSize" -> 12
 };
-tree[el_, OptionsPattern[]] := DynamicModule[{root},
+tree[el_, OptionsPattern[]] := DynamicModule[{root, searchQuery = "", searchVisible = False, treeRevision = 0},
   root[_] := False;
   root["selected"] := Null;
-  Panel[Column[{
-    Dynamic@Pane[Row[{
-      Button["Copy node", CopyToClipboard[Global`HTMLElement[root["selected"]]], Enabled -> (root["selected"] =!= Null)],
-      Button["Copy CSS selector", CopyToClipboard[root["selected"]@cssSelector[]], Enabled -> (root["selected"] =!= Null)]
-    }]],
-    Pane[Deploy@renderElement[el, root, el, False],
-      Scrollbars -> True,
-      BaseStyle -> {Background -> White, FontSize -> OptionValue["FontSize"]},
-      ImageSize -> {OptionValue["Width"], OptionValue["Height"]},
-      FrameMargins -> 20
-    ]
-  }]]
+  root["searchSelected"] := Null;
+  root["treeRoot"] = el;
+  root["query"] = "";
+  root["matches"] = {};
+  root["current"] = 0;
+  root["scrollPosition"] = {0, 0};
+  root["fontSize"] = OptionValue["FontSize"];
+  root["rowHeight"] = domTreeRowHeight[root["fontSize"]];
+  With[{refreshTree = Function[treeRevision++]}, Deploy@Panel[Column[{
+      Dynamic@Pane[Row[{
+        Button["Copy node", CopyToClipboard[Global`HTMLElement[root["selected"]]], Enabled -> (root["selected"] =!= Null)],
+        Button["Copy CSS selector", CopyToClipboard[root["selected"]@cssSelector[]], Enabled -> (root["selected"] =!= Null)]
+      }]],
+      Dynamic[
+        If[searchVisible, Row[{
+          InputField[Dynamic[searchQuery], String, BoxID -> "jsoupLinkDOMTreeSearch", FieldHint -> "Search text", FieldSize -> 36, ContinuousAction -> True, BaseStyle -> {Editable -> True, Selectable -> True}],
+          Button["Search", submitDOMTreeSearch[root, searchQuery, refreshTree]],
+          Button["prev", navigateDOMTreeSearch[root, -1, refreshTree], Enabled -> Dynamic[root["matches"] =!= {}]],
+          Button["next", navigateDOMTreeSearch[root, 1, refreshTree], Enabled -> Dynamic[root["matches"] =!= {}]],
+          Spacer[8],
+          Dynamic@domTreeResultLabel[root]
+        }], Spacer[0]],
+        TrackedSymbols :> {searchVisible}
+      ],
+      Pane[Dynamic[
+        treeRevision;
+        renderDOMTreeRows[domTreeVisibleRows[el, TrueQ[root[#]] &], root, refreshTree],
+        TrackedSymbols :> {treeRevision},
+        SynchronousUpdating -> False
+      ],
+        Scrollbars -> True,
+        ScrollPosition -> Dynamic[root["scrollPosition"]],
+        BaseStyle -> {Background -> White, FontSize -> OptionValue["FontSize"], Editable -> False, Selectable -> False},
+        ImageSize -> {OptionValue["Width"], OptionValue["Height"]},
+        FrameMargins -> 20
+      ]
+    }]]],
+  Initialization :> initializeDOMTree[root, Function[value, searchVisible = value]]
 ];
 
 Options[popup] = {
@@ -338,8 +485,10 @@ Options[popup] = {
 };
 popup[el_, opts: OptionsPattern[]] := CreateDocument[tree[el, opts],
   "CellInsertionPointCell" -> Cell[],
+  Deployed -> False,
+  Editable -> True,
+  Selectable -> True,
   ShowCellBracket -> False,
-  WindowElements -> {},
   WindowFrame -> "Generic",
   WindowSize -> {OptionValue["WindowWidth"], OptionValue["WindowHeight"]},
   WindowTitle -> None,
@@ -349,4 +498,3 @@ popup[el_, opts: OptionsPattern[]] := CreateDocument[tree[el, opts],
 End[]; (* End Private Context *)
 
 EndPackage[]
-

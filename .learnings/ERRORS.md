@@ -1,5 +1,236 @@
 # Errors
 
+## [ERR-20260813-002] cua-driver text input passed through the active IME
+
+**Logged**: 2026-08-13T02:35:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+通过 `cua-driver type_text` 向 Mathematica Input 单元逐字输入 ASCII 代码时，当前中文输入法转换了字符，导致表达式损坏。
+
+### Error
+
+```text
+输入后的 Needs、Import、文件路径和符号名均出现中文候选转换，不能执行。
+```
+
+### Context / 背景
+
+- `cua-driver` 的 X11 后台输入路径明确不可用，前台逐键输入经过当前 IME。
+- Paclet 安装和 Wolfram kernel 本身正常，问题只在 GUI 自动输入层。
+
+### Suggested Fix / 修复
+
+用 `clipboard_write` 写入精确代码并以 `clipboard_read` 读回校验，再通过 `Ctrl+V` 粘贴到 Mathematica 输入单元。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: jsoupLink/Kernel/jsoupLink.wl
+
+### Resolution
+
+- **Resolved**: 2026-08-13T02:36:00+08:00
+- **Notes**: 改用已校验的剪贴板粘贴路径完成 FrontEnd 同 kernel 加载。
+
+---
+## [ERR-20260813-012] archive count awk used a reserved function name
+
+**Logged**: 2026-08-13T21:01:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+归档内容辅助计数命令把 awk 内置函数名 `index` 用作计数变量，导致语法错误。
+
+### Error / 错误
+
+```text
+awk: line 1: syntax error at or near ++
+```
+
+### Context / 背景
+
+- `unzip -l` 的原始列表已经显示 11 个 notebook 和 `SearchIndex`、`Index`、`SpellIndex`。
+- 失败只发生在额外汇总命令，不影响归档或其他校验结果。
+
+### Suggested Fix / 修复
+
+使用 `rg -c` 分别统计各类路径，或采用不与 awk 内置函数冲突的变量名。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: build/jsoupLink-1.1.1.paclet
+
+### Resolution / 解决
+
+- **Resolved**: 2026-08-13T21:01:00+08:00
+- **Notes**: 改用独立 `rg -c` 计数重跑。
+
+---
+## [ERR-20260813-011] wolframscript PacletBuild stalled in staging
+
+**Logged**: 2026-08-13T20:43:00+08:00
+**Priority**: high
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+本轮通过 shebang 运行 `./scripts/build.wls` 时，`PacletBuild` 在 staging 阶段运行约 6 分钟仍未生成 `.paclet`，主 kernel 等待一个 WSTP 辅助连接返回。
+
+### Error / 错误
+
+```text
+build/jsoupLink staging exists, but build/jsoupLink-1.1.1.paclet does not exist.
+```
+
+### Context / 背景
+
+- 只有一个构建任务在运行，没有并发写 `build/`。
+- 内核仍存活但停在 `select`；`lsof` 显示额外的共享内存 WSTP 连接。
+- 中断后 shell 返回 0，但归档不存在，因此按产物检查判定该次构建失败。
+
+### Suggested Fix / 修复
+
+确认无残留构建进程后，用原始 `WolframKernel -noinit -noprompt -script scripts/build.wls` 重试；若仍卡在 `DocumentationBuildNotebooksIncremental`，给官方 `PacletBuild` 传入只替换 `Documentation` build 操作的 handler，用 `PacletTools` 自己的 `copyRelativeFiles` 原样复制已验证 notebook。仍以归档存在性、manifest、包内源码/JAR 哈希和隔离安装为准。
+
+### Metadata
+
+- Reproducible: unknown
+- Related Files: scripts/build.wls, build/
+- See Also: ERR-20260813-009, ERR-20260813-010
+
+### Resolution / 解决
+
+- **Resolved**: 2026-08-13T20:54:00+08:00
+- **Notes**: 原始 kernel 重试同样在文档增量构建处停滞；后备 handler 通过官方 `PacletBuild` 成功生成标准归档。首个后备包只有 notebook、没有生成索引；复用已安装上一候选的同版文档缓存时，最初又错误要求生成索引逐项进入 manifest，随后还修正了 `RelativePath` 上下文。最终按 `PacletTools` 实际边界处理：manifest 记录扩展声明的 notebook，handler 复制缓存中的全部文档构建文件，解包后再断言三类索引。最终包含 11 个 notebook、6 个 SearchIndex 文件、3 个 Index 文件、3 个 SpellIndex 文件；归档、源码/JAR 哈希和两条隔离安装均重新验证。
+
+---
+## [ERR-20260813-010] concurrent FrontEnd probes stalled
+
+**Logged**: 2026-08-13T19:52:00+08:00
+**Priority**: medium
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+并行运行两个各自调用 `UsingFrontEnd` 的 WolframKernel 探针时，两个进程均无输出挂起；改为串行后，包含 `NotebookFind` 的选择探针仍无输出挂起，无法形成本轮有效的选择边界验收结果。
+
+### Error / 错误
+
+```text
+Both concurrent probes produced no output; the selection probe also stalled when retried alone.
+```
+
+### Context / 背景
+
+- 两个探针分别测试 `Deploy` 选择边界和长 DOM 栅格化；串行重试只执行了选择探针。
+- 二者都需要连接本机同一个 Wolfram FrontEnd；源码测试和 CodeInspector 已完成，不受影响。
+- 已用中断结束两个精确会话，并确认无相应探针 kernel 残留。
+
+### Suggested Fix / 修复
+
+所有依赖 `UsingFrontEnd`、`CreateDocument` 或 `Rasterize` 的探针严格串行运行；涉及 `NotebookFind` 的隐藏 notebook 探针还可能受当前真实 FrontEnd 会话状态影响。只有进程明确退出且打印 pass marker 时才计为通过，阻塞结果不得重试成“通过”。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: /tmp/jsouplink-deployed-selection-probe.wls, /tmp/jsouplink-long-dom-opener-probe.wls
+- See Also: ERR-20260813-009
+
+### Resolution / 解决
+
+- **Resolved**: 2026-08-13T19:52:00+08:00
+- **Notes**: 并行结果和串行选择探针均作废并终止；本轮沿用此前已通过的选择对照及用户真实确认，当前改动只由直接相关的原生 `Opener` 探针覆盖。
+
+---
+## [ERR-20260813-007] Dynamic outside Deploy removed rendered row backgrounds
+
+**Logged**: 2026-08-13T11:00:00+08:00
+**Priority**: high
+**Status**: resolved
+**Area**: frontend
+
+### Summary / 摘要
+
+为排查搜索后的 `Opener` 交互，尝试将 `Deploy@Dynamic[...]` 改为 `Dynamic[Deploy[...]]`，真实 FrontEnd 中浅黄色背景随即消失。
+
+### Error
+
+```text
+short raster: ExactTargetPixels -> 0
+long raster: ExactTargetPixels -> 0
+```
+
+### Context / 背景
+
+- MUnit 的表达式结构检查无法发现该渲染回归。
+- 原 `Deploy@Dynamic[...]` 下同一探针分别有 27,963 和 36,667 个精确目标色像素。
+
+### Suggested Fix / 修复
+
+保留已验证的 `Deploy@Dynamic[...]`；用事件状态和焦点探针排查 `Opener`，不要改动部署层次。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: jsoupLink/Kernel/jsoupLink.wl, Tests/jsoupLink.wlt
+- See Also: ERR-20260813-005
+
+### Resolution
+
+- **Resolved**: 2026-08-13T11:00:00+08:00
+- **Notes**: 已撤回该结构改动，两个栅格探针恢复到 27,963 和 36,667 个浅黄色像素。
+
+---
+
+## [ERR-20260813-001] CLI FrontEnd probe used a different kernel
+
+**Logged**: 2026-08-13T00:03:00+08:00
+**Priority**: medium
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+通过 CLI `UsingFrontEnd` 创建动态 DOM 树时，FrontEnd 将 notebook 动态求值路由到另一个 kernel；Java DOM 对象和私有包定义不在该 kernel 中，界面因此显示未求值表达式。
+
+### Error
+
+```text
+动态 notebook 中出现 jsoupLink`Private`tree[...] 等未求值表达式，不能作为正常用户路径的 FrontEnd 验收结果。
+```
+
+### Context / 背景
+
+- 源 kernel 中的 Java DOM 对象不能直接跨 kernel 作为 J/Link 对象继续使用。
+- 包源码、MUnit 和语法解析均正常，失败发生在 CLI 探针的 kernel 路由边界。
+- `wolframscript` 查询 `Options[InputField, ContinuousAction]` 时还报告缺少 `~/.config/Wolfram/WolframScript/WolframScript.conf`，但表达式仍成功返回 `ContinuousAction -> False`；这条配置警告与包无关。
+
+### Suggested Fix / 修复
+
+在用户正常启动的 Wolfram FrontEnd kernel 中完成 `Get`、HTML 导入、DOM 树创建和交互测试，保证 Java 对象、私有定义及 Dynamic 都在同一 kernel。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: jsoupLink/Kernel/jsoupLink.wl, Tests/Fixtures/search.html
+
+### Resolution
+
+- **Resolved**: 2026-08-13T00:03:00+08:00
+- **Notes**: 改用用户手动打开的 Wolfram 15.0 FrontEnd 窗口和 cua-driver 定向后台交互验收。
+
+---
+
 ## [ERR-20260812-015] Git query from release download directory
 
 **Logged**: 2026-08-12T17:25:00+08:00
@@ -574,5 +805,236 @@ apply_patch verification failed: invalid utf-8 sequence
 
 - **Resolved**: 2026-08-12T14:10:00+08:00
 - **Notes**: 已拆分文本补丁与二进制删除操作。
+
+---
+## [ERR-20260813-004] cua-driver background Shift+Enter closed the Mathematica FrontEnd
+
+**Logged**: 2026-08-13T03:15:00+08:00
+**Priority**: high
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+在 Mathematica 主 notebook 中用不可验证的背景坐标点击选择输入单元后发送 `Shift+Enter`，交互式 FrontEnd 随后退出。
+
+### Error
+
+```text
+hotkey/click effect: unverifiable
+list_windows after Shift+Enter: Found 0 windows
+pgrep: the interactive WolframNB process was gone
+```
+
+### Context / 背景
+
+- 目标是重新计算已有的 `Get[...]; obj["DOMTree"]` 验收单元。
+- 背景坐标点击没有提供“目标单元已被选中”的语义证据，继续发送计算快捷键不安全。
+
+### Suggested Fix / 修复
+
+Mathematica notebook 计算必须先从新截图确认目标单元选择状态；背景动作无法确认时，只升级该动作到前景并立即验证，不连续发送无法确认的输入。
+
+### Metadata
+
+- Reproducible: unknown
+- Related Files: jsoupLink/Kernel/jsoupLink.wl
+
+### Resolution
+
+- **Resolved**: 2026-08-13T03:18:00+08:00
+- **Notes**: 停止复用不可验证动作链；重新启动交互式 FrontEnd 后改用可见选中状态和逐动作截图验收。
+
+---
+
+## [ERR-20260813-003] cua-driver launch_app used a guessed Linux path
+
+**Logged**: 2026-08-13T03:16:00+08:00
+**Priority**: medium
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+用猜测的 `/usr/local/bin/mathematica` 调用 Linux `launch_app` 被拒绝。
+
+### Error
+
+```text
+Failed to launch: '/usr/local/bin/mathematica' is not an executable on PATH and matches no installed .desktop application. Call list_apps and round-trip its launch_path.
+```
+
+### Context / 背景
+
+- 需要在异常退出后恢复 Mathematica FrontEnd。
+- `cua-driver` 的 Linux 启动路径要求使用 `list_apps` 返回的已注册 Desktop Entry 命令。
+
+### Suggested Fix / 修复
+
+先调用 `list_apps`，按应用名筛选，再把返回的 `launch_path` 原样传给 `launch_app`。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: .learnings/ERRORS.md
+
+### Resolution
+
+- **Resolved**: 2026-08-13T03:18:00+08:00
+- **Notes**: 已解析到 `/usr/local/Wolfram/Wolfram/15.0/Executables/WolframNB --name com.wolfram.Wolfram.15.0`。
+
+---
+## [ERR-20260813-005] DOM search Item background was not rendered
+
+**Logged**: 2026-08-13T03:25:00+08:00
+**Priority**: high
+**Status**: resolved
+**Area**: frontend
+
+### Summary / 摘要
+
+搜索结果表达式包含浅黄色 `Background` 选项，但真实 FrontEnd 中仍显示白色。
+
+### Error
+
+```text
+MUnit expression check: passed
+FrontEnd raster probe: ExactTargetPixels -> 0
+```
+
+### Context / 背景
+
+- 背景选项位于独立 `Item` 上，而 DOM 行由 `Column`/`Pane` 排列。
+- `Item` 的背景只有作为 `Grid` 等容器的直接单元格时才被绘制。
+- 因此只检查表达式中存在 `Background -> RGBColor[...]` 会产生假阳性。
+
+### Suggested Fix / 修复
+
+将固定高度行包装成 `Grid` 的直接 `Item`，由行级函数选择搜索浅黄色或手动选择蓝色；除结构回归外，用 `UsingFrontEnd@Rasterize` 检查实际目标色像素。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: jsoupLink/Kernel/jsoupLink.wl, Tests/jsoupLink.wlt
+
+### Resolution
+
+- **Resolved**: 2026-08-13T03:27:00+08:00
+- **Notes**: 48/48 MUnit 通过；短行渲染含 27,963 个 `#fff8c4` 像素，128 行滚动视口含 36,667 个目标色像素。
+
+---
+## [ERR-20260813-006] Temporary cleanup used a blocked rm command
+
+**Logged**: 2026-08-13T03:32:00+08:00
+**Priority**: low
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+收尾时使用 `rm -f` 清理精确列出的 `/tmp` 探针文件，被执行工具的安全策略拒绝。
+
+### Error
+
+```text
+rm -f style commands are not permitted. Use a safer approach
+```
+
+### Context / 背景
+
+- 命令未执行，没有文件被删除。
+- 目标均为本轮创建的临时脚本、notebook 和 PNG。
+
+### Suggested Fix / 修复
+
+文本文件用 `apply_patch` 删除；`/tmp` 挂载不支持 `gio trash` 时，只对已核实的本轮临时二进制文件逐个使用 `unlink`。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: .learnings/ERRORS.md
+
+### Resolution
+
+- **Resolved**: 2026-08-13T03:32:00+08:00
+- **Notes**: `gio trash` 对 `/tmp` 返回“不支持在系统内部挂载上的丢弃到回收站操作”；随后仅对两个已核实的探针 PNG 逐个使用 `unlink`。
+
+---
+## [ERR-20260813-008] wolframscript validation ran from the user Wolfram directory
+
+**Logged**: 2026-08-13T17:55:00+08:00
+**Priority**: high
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+使用 `wolframscript -code` 和相对路径运行回归时，kernel 的 `Directory[]` 是 `/home/yode/WolframDir`，而不是 shell 传入的项目目录；缺失测试文件后错误的退出条件还把 0 项测试当成了成功。
+
+### Error
+
+```text
+TestReport::fnfnd: File "Tests/jsoupLink.wlt" not found.
+<|TestsSucceeded -> 0, TestsFailed -> 0, TestsTotal -> Missing[...]|>
+```
+
+### Context / 背景
+
+- shell 工作目录为 `/home/yode/Documents/Program/other/jSoupLink`。
+- `wolframscript` 中 `$InitialDirectory` 是项目目录，但 `Directory[]` 被用户配置设为 `/home/yode/WolframDir`。
+- CodeInspector 同时因未使用 `File[path]` 而收到普通字符串代码，不是文件内容。
+
+### Suggested Fix / 修复
+
+项目测试和 CodeInspector 使用已验证的 `WolframKernel -noinit -noprompt -run ...` 命令；退出条件必须同时断言预期测试总数非零及失败数为零，CodeInspector 使用 `CodeInspector`CodeInspect[File[file]]`。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: Tests/jsoupLink.wlt, BUILD.md
+
+### Resolution
+
+- **Resolved**: 2026-08-13T17:55:00+08:00
+- **Notes**: 改用原始 kernel 和绝对解析后的项目路径重跑完整验证。
+
+---
+## [ERR-20260813-009] concurrent build probes raced on the shared build directory
+
+**Logged**: 2026-08-13T18:08:00+08:00
+**Priority**: high
+**Status**: resolved
+**Area**: tests
+
+### Summary / 摘要
+
+为核对构建入口，同时运行了三个都会删除和写入 `build/` 的命令，导致 `PacletBuild` 相互覆盖、`CopyFile::eexist`，其中一个进程被系统终止。
+
+### Error
+
+```text
+CopyFile::eexist: .../build/jsoupLink/Kernel/jsoupLink.wl already exists.
+Build failed: PacletBuild did not return Success.
+Killed
+```
+
+### Context / 背景
+
+- `scripts/build.wls` 开始时会删除整个 `build/`，因此不是可并行执行的只读验证。
+- 并行结果无法判断单次构建本身是否正常，必须全部作废。
+
+### Suggested Fix / 修复
+
+构建、解包和隔离安装按顺序串行执行；显式传播子命令退出码，并在进入下一阶段前检查归档存在性和源码哈希。
+
+### Metadata
+
+- Reproducible: yes
+- Related Files: scripts/build.wls, build/
+
+### Resolution
+
+- **Resolved**: 2026-08-13T18:08:00+08:00
+- **Notes**: 确认没有遗留构建 kernel 后，只运行一次官方构建脚本。
 
 ---

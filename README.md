@@ -4,7 +4,7 @@
 
 本项目依据 GPL-2.0-or-later 许可证发布。
 
-当前版本：1.1.0
+当前版本：1.1.1
 
 ## 简介
 
@@ -13,6 +13,17 @@
 在传统做法中，Mathematica 通常将 HTML 导入为符号 XML，再通过模式匹配进行较为繁琐的变换。jsoupLink 则引入了 HTML 元素对象，使遍历和修改 DOM 树变得更加直接。
 
 jsoupLink 最常见的用途是从网页中提取信息，例如表格数据。
+
+## 1.1.1 更新
+
+1.1.1 完成了上游 [#3](https://github.com/cekdahl/jSoupLink/issues/3) 所提出的 DOM 树文本搜索：
+
+- 在 DOM 树窗口中按 `Ctrl+F` 打开搜索框，输入文本后点击右侧的 `Search` 按钮搜索。
+- 搜索忽略大小写，并自动展开目标节点的祖先层级、选中直接包含匹配文本的最小元素节点、用浅黄色高亮该节点并滚动到目标文本附近；“Copy node”和“Copy CSS selector”会直接作用于这个节点。
+- 搜索框右侧的 `next` 和 `prev` 按钮分别切换到下一个和上一个匹配；到达末尾或开头时会循环。
+- 搜索框旁显示“当前序号 / 匹配总数”。
+- 搜索只匹配页面中的文本节点，不匹配 HTML 属性、脚本等数据节点，也不会跨不同文本节点拼接关键字。
+- 搜索框保留标准的复制、剪切和粘贴操作；搜索完成后仍可用鼠标继续展开或折叠任意 DOM 节点。
 
 ## 1.1.0 更新
 
@@ -28,10 +39,10 @@ jsoupLink 最常见的用途是从网页中提取信息，例如表格数据。
 
 ## 安装 jsoupLink
 
-jsoupLink 以 Paclet 形式发布。请从 [Releases 页面](https://github.com/Juddd/jSoupLink/releases)下载 1.1.0，然后执行：
+jsoupLink 以 Paclet 形式发布。请从 [Releases 页面](https://github.com/Juddd/jSoupLink/releases)下载 1.1.1，然后执行：
 
 ```wl
-PacletInstall["/path/to/jsoupLink-1.1.0.paclet"]
+PacletInstall["/path/to/jsoupLink-1.1.1.paclet"]
 ```
 
 使用 `Needs` 加载 jsoupLink：
@@ -239,6 +250,8 @@ element["DOMTree"]
 
 可以通过单击选择元素。“Copy node”按钮会将对应的 HTML 元素对象写入剪贴板，以便粘贴到 notebook 中；“Copy CSS selector”按钮会复制一个能够唯一标识所选元素的 CSS 选择器。
 
+在 DOM 树窗口中按 `Ctrl+F` 可打开搜索框。输入关键字并点击右侧的 `Search` 按钮后，界面会自动展开并滚动到第一个匹配文本所在的最小元素节点，以浅黄色高亮当前节点；此时“Copy node”和“Copy CSS selector”会直接复制该节点或它的 CSS 选择器。点击 `next` 按钮前往下一个匹配，点击 `prev` 按钮返回上一个匹配，高亮和按钮目标会随之移动。搜索框旁的计数采用“当前序号 / 匹配总数”格式，例如 `2 / 5`。再次按 `Ctrl+F` 可以修改关键字并重新搜索。
+
 ## 获取绝对 URL
 
 如果无法从链接中取得绝对 URL，可以尝试读取 `"abs:href"` 属性，而不是 `"href"`：
@@ -257,7 +270,7 @@ element["Attribute", "abs:href"]
 
 该脚本使用 `PacletBuild` 构建 Paclet，并验证 manifest、解包后的归档、内置 jsoup JAR、文档和入口文件名。构建和隔离安装测试的详细说明参见 [BUILD.md](BUILD.md)。
 
-1.1.0 内置从 Maven Central 获取的 jsoup 1.23.1：
+当前 1.1.1 内置从 Maven Central 获取的 jsoup 1.23.1：
 
 - SHA-1：`0c0350bb325da274f0508349109516a7855d01ab`
 - SHA-256：`8b15e2b28eeb1e0a88a9b7dab4dc0c23524491c56959785dea22f7846897b668`
