@@ -1,6 +1,17 @@
 # PROJECT_STATE
 
-## 1.1.2 Maintenance / 当前维护版本
+## 1.1.3 Development / 当前开发版本
+
+- 当前分支：`maint/1.1.3`，基线为已发布 1.1.2 的状态提交 `40fb14c`；当前发布候选尚未推送或发布。
+- 版本号已统一更新为 1.1.3；新增属性式 `Data`、`AbsURL`、`Parents`，以及对应的 `HTMLData`、`HTMLAbsURL`、`HTMLParents` 薄包装；`HTMLAbsURL` 支持操作符形式。
+- `Data` 返回 `<script>`、`<style>` 等数据内容且不混入普通 TextNode；`AbsURL` 根据 `BaseURI` 解析属性，缺失属性返回空字符串；`Parents` 按从近到远返回祖先，根元素返回空列表。
+- `Tests/jsoupLink.wlt` 当前为 103 项，WolframKernel MUnit 103/103 通过；新增 10 项测试覆盖上述语义、边界和全部薄包装形式。
+- CodeInspector 对主内核文件报告 4 条 Remark 和 33 条既有 Scoping 提示，Fatal/Error 为 0；`git diff --check` 通过。
+- `build/jsoupLink-1.1.3.paclet` 已生成，大小 686292 bytes，SHA-256 为 `c05ef9227007c2e8299af9c2256cfc5cd2ac6b62b64cb418c9d3d12dbd9eea16`；构建脚本的 manifest、解包归档、JAR 哈希和旧入口排除检查通过。
+- 两条隔离路径已通过：空用户库直接安装 1.1.3；官方 1.0.0 安装后升级到 1.1.3。两次 fresh-kernel 验证均覆盖三个新 API。
+- `PacletBuild` 完成并返回成功后，Wolfram FrontEnd 退出阶段仍复现已知 SIGSEGV；归档已独立通过隔离安装和 fresh-kernel 验证。
+
+## 1.1.2 Maintenance / 已发布版本
 
 - 当前分支：`maint/1.1.2`，基线为已发布的 1.1.1 提交 `1e5dfb1`；1.1.2 已提交、推送并发布。
 - 已修复 `Unwrap` 零参数调用和 `Clean` 的 jsoup 1.23.1 调用，后者使用 ``Safelist`relaxed[]``。
@@ -15,12 +26,12 @@
 
 ## Goal / 目标
 
-在已发布的 1.1.1 维护基线上完成 `jsoupLink` 1.1.2：修复 `Unwrap`/`Clean`，补齐八项属性式 API 与薄包装，并通过回归、构建和隔离安装验证。
+在已发布的 1.1.2 基线上完成 `jsoupLink` 1.1.3：新增 `Data`、`AbsURL`、`Parents` 属性及其薄包装，并通过回归、构建和隔离安装验证。
 
 ## Progress / 当前进度
 
 - 基线：`d5a3456`（上游 `feature/rel1.1`）。
-- 历史发布分支：`maint/1.1.1`；当前工作分支见上方 1.1.2 维护记录。
+- 历史发布分支：`maint/1.1.1`、`maint/1.1.2`；当前工作分支见上方 1.1.3 开发记录。
 - 已 cherry-pick Felix Kasza 的 PR #8 构建提交并保留作者信息；入口已落在 `jsoupLink/Kernel/jsoupLink.wl`。
 - 已完成 #4 的入口/元数据修复、锁定 #5、更新 jsoup、补全文档/许可证/测试和唯一构建入口。
 - 已提交并发布到 `Juddd/jSoupLink`；1.1.0 tag 与 Release 均指向已验证的维护提交。

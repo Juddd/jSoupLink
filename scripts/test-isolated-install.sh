@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
-archive="$project_root/build/jsoupLink-1.1.2.paclet"
+archive="$project_root/build/jsoupLink-1.1.3.paclet"
 official_archive="$project_root/build/jsoupLink-1.0.0-official.paclet"
 normal_userbase=$(WolframKernel -noinit -noprompt -run 'WriteString[$Output,$UserBaseDirectory];Exit[0]')
 licensing_source="$normal_userbase/Licensing"

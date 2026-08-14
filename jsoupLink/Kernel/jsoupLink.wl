@@ -7,7 +7,7 @@
 (* :Author: Calle Ekdahl                   *)
 (* :Date: 2026-08-12                       *)
 
-(* :Package Version: 1.1.2                 *)
+(* :Package Version: 1.1.3                 *)
 (* :Mathematica Version: 12.3.0.0          *)
 (* :Copyright: (c) 2015-2024 Calle Ekdahl  *)
 (* :Keywords:                              *)
@@ -33,6 +33,9 @@ HTMLWholeText::usage = "HTMLWholeText[element] returns the element's full text w
 HTMLWholeOwnText::usage = "HTMLWholeOwnText[element] returns the element's direct text while preserving whitespace, excluding descendant elements.";
 HTMLDataset::usage = "HTMLDataset[element] returns the element's data-* attributes as an association.";
 HTMLCSSSelector::usage = "HTMLCSSSelector[element] returns a CSS selector that identifies the element.";
+HTMLData::usage = "HTMLData[element] returns the combined data of the element and its descendants, such as script or style contents.";
+HTMLAbsURL::usage = "HTMLAbsURL[element, attribute] returns the absolute URL for the given attribute using the element's base URI. HTMLAbsURL[attribute] represents an operator form.";
+HTMLParents::usage = "HTMLParents[element] returns the element's ancestor elements.";
 HTMLTree::usage = "HTMLTree[element] opens an interactive DOM tree for the element. It is equivalent to element[\"DOMTree\"].";
 
 Begin["`Private`"]; (* Begin Private Context *)
@@ -93,6 +96,7 @@ Global`HTMLElement[el_]["TagName"] := el@tagName[];
 Global`HTMLElement[el_]["TagName", tag_] := el@tagName[tag];
 Global`HTMLElement[el_]["Root"] := Global`HTMLElement[First[el@ownerDocument[]@children[]@toArray[]]];
 Global`HTMLElement[el_]["Parent"] := If[el@tagName[] != "html", Global`HTMLElement[el@parent[]], Global`HTMLElement[el]];
+Global`HTMLElement[el_]["Parents"] := wrapElements[el@parents[]];
 Global`HTMLElement[el_]["Children"] := Global`HTMLElement /@ el@children[]@toArray[];
 Global`HTMLElement[el_]["Siblings"] := Global`HTMLElement /@ el@siblingElements[]@toArray[];
 Global`HTMLElement[el_]["Select", selector_String] := Global`HTMLElement /@ el@select[selector]@toArray[];
@@ -105,6 +109,7 @@ Global`HTMLElement[el_]["Value"] := el@val[];
 Global`HTMLElement[el_]["InnerHTML"] := el@html[];
 Global`HTMLElement[el_]["InnerHTML", newHTML_String] := Global`HTMLElement[el@html[newHTML]];
 Global`HTMLElement[el_]["OuterHTML"] := el@outerHtml[];
+Global`HTMLElement[el_]["Data"] := el@data[];
 Global`HTMLElement[el_]["OwnText"] := el@ownText[];
 Global`HTMLElement[el_]["WholeText"] := el@wholeText[];
 Global`HTMLElement[el_]["WholeOwnText"] := el@wholeOwnText[];
@@ -123,6 +128,7 @@ Global`HTMLElement[el_]["IsBlock"] := el@isBlock[];
 Global`HTMLElement[el_]["HasText"] := el@hasText[];
 Global`HTMLElement[el_]["BaseURI"] := el@baseUri[];
 Global`HTMLElement[el_]["BaseURI", uri_String] := el@setBaseUri[uri];
+Global`HTMLElement[el_]["AbsURL", attribute_String] := el@absUrl[attribute];
 Global`HTMLElement[el_]["HasClass", class_String] := el@hasClass[class];
 Global`HTMLElement[el_]["CSSSelector"] := el@cssSelector[];
 Global`HTMLElement[el_]["AddClass", class_String] := Global`HTMLElement[el@addClass[class]];
@@ -144,11 +150,11 @@ Global`HTMLElement[el_]["Clean"] := Global`HTMLElement[el@html[Jsoup`clean[el@ht
 Global`HTMLElement[el_]["DeepCopy"] := Global`HTMLElement[JavaBlock[el@clone[]]];
 Global`HTMLElement[el_]["DOMTree"] := popup[el];
 
-properties = {"TagName", "Root", "Parent", "Children", "Siblings",
+properties = {"TagName", "Root", "Parent", "Parents", "Children", "Siblings",
   "Select", "SelectFirst", "ExpectFirst", "Closest", "SelectXPath", "AllElements", "Value", "InnerHTML", "OuterHTML",
-  "OwnText", "WholeText", "WholeOwnText", "AllText", "ID", "ClassNames", "HasAttribute",
+  "Data", "OwnText", "WholeText", "WholeOwnText", "AllText", "ID", "ClassNames", "HasAttribute",
   "Attribute", "Attributes", "Dataset", "RemoveAttribute", "IsBlock", "HasText",
-  "BaseURI", "HasClass", "AddClass", "RemoveClass", "ToggleClass", "CSSSelector",
+  "BaseURI", "AbsURL", "HasClass", "AddClass", "RemoveClass", "ToggleClass", "CSSSelector",
   "After", "Before", "Append", "Prepend", "ReplaceWith", "Remove",
   "Wrap", "Unwrap", "Clean", "DeepCopy", "DOMTree"};
 
@@ -183,10 +189,14 @@ HTMLAttribute[el_Global`HTMLElement, attribute_String] := el["Attribute", attrib
 HTMLAttribute[attribute_String][node_Global`HTMLElement] := node["Attribute", attribute];
 HTMLAttributes[el_Global`HTMLElement] := el["Attributes"];
 HTMLParent[el_Global`HTMLElement] := el["Parent"];
+HTMLParents[el_Global`HTMLElement] := el["Parents"];
 HTMLChildren[el_Global`HTMLElement] := el["Children"];
 HTMLSiblings[el_Global`HTMLElement] := el["Siblings"];
 HTMLOwnText[el_Global`HTMLElement] := el["OwnText"];
 HTMLAllText[el_Global`HTMLElement] := el["AllText"];
+HTMLData[el_Global`HTMLElement] := el["Data"];
+HTMLAbsURL[el_Global`HTMLElement, attribute_String] := el["AbsURL", attribute];
+HTMLAbsURL[attribute_String][el_Global`HTMLElement] := el["AbsURL", attribute];
 HTMLSelectFirst[el_Global`HTMLElement, selector_String] := el["SelectFirst", selector];
 HTMLSelectFirst[selector_String][el_Global`HTMLElement] := el["SelectFirst", selector];
 HTMLExpectFirst[el_Global`HTMLElement, selector_String] := el["ExpectFirst", selector];

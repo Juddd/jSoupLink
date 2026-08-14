@@ -10,32 +10,45 @@ main = First@dom["Select", "main"];
 lead = First@dom["Select", "p.lead"];
 link = First@dom["Select", "a"];
 peer = First@dom["Select", ".peer"];
+script = First@dom["Select", "script"];
+urlDOM = jsoupLink`Private`ParseDOM["<main><a id=\"relative\" href=\"/docs?q=1#intro\">Docs</a></main>", "https://example.test/base/page.html"];
+relativeLink = First@urlDOM["Select", "#relative"];
 
 VerificationTest[Head[dom] === Global`HTMLElement, True, TestID -> "HTMLElement remains in Global context"]
 VerificationTest[dom["TagName"], "html", TestID -> "Import HTMLDOM"]
-VerificationTest[dom["Properties"], {"TagName", "Root", "Parent", "Children", "Siblings", "Select", "SelectFirst", "ExpectFirst", "Closest", "SelectXPath", "AllElements", "Value", "InnerHTML", "OuterHTML", "OwnText", "WholeText", "WholeOwnText", "AllText", "ID", "ClassNames", "HasAttribute", "Attribute", "Attributes", "Dataset", "RemoveAttribute", "IsBlock", "HasText", "BaseURI", "HasClass", "AddClass", "RemoveClass", "ToggleClass", "CSSSelector", "After", "Before", "Append", "Prepend", "ReplaceWith", "Remove", "Wrap", "Unwrap", "Clean", "DeepCopy", "DOMTree"}, TestID -> "Property list includes 1.1.2 API"]
+VerificationTest[dom["Properties"], {"TagName", "Root", "Parent", "Parents", "Children", "Siblings", "Select", "SelectFirst", "ExpectFirst", "Closest", "SelectXPath", "AllElements", "Value", "InnerHTML", "OuterHTML", "Data", "OwnText", "WholeText", "WholeOwnText", "AllText", "ID", "ClassNames", "HasAttribute", "Attribute", "Attributes", "Dataset", "RemoveAttribute", "IsBlock", "HasText", "BaseURI", "AbsURL", "HasClass", "AddClass", "RemoveClass", "ToggleClass", "CSSSelector", "After", "Before", "Append", "Prepend", "ReplaceWith", "Remove", "Wrap", "Unwrap", "Clean", "DeepCopy", "DOMTree"}, TestID -> "Property list includes 1.1.3 API"]
 VerificationTest[lead["OwnText"], "Hello", TestID -> "Legacy OwnText property"]
 VerificationTest[lead["AllText"], "Hello world", TestID -> "Legacy AllText property"]
 VerificationTest[lead["Attribute", "data-kind"], "intro", TestID -> "Legacy Attribute property"]
 VerificationTest[lead["data-kind"], "intro", TestID -> "Legacy attribute shorthand"]
 VerificationTest[lead["Attributes"], <|"class" -> "lead", "data-kind" -> "intro"|>, TestID -> "Legacy Attributes property"]
 VerificationTest[lead["Parent"]["TagName"], "main", TestID -> "Legacy Parent property"]
+VerificationTest[(#["TagName"] &) /@ lead["Parents"], {"main", "body", "html"}, TestID -> "Parents returns ancestors from nearest to farthest"]
+VerificationTest[dom["Parents"], {}, TestID -> "Parents returns an empty list for root element"]
 VerificationTest[Length@main["Children"], 3, TestID -> "Legacy Children property"]
 VerificationTest[Sort[#["TagName"] & /@ link["Siblings"]], {"div", "p"}, TestID -> "Legacy Siblings property"]
 VerificationTest[Length@dom["AllElements"] > 5, True, TestID -> "Legacy AllElements property"]
 VerificationTest[dom["Root"]["TagName"], "html", TestID -> "Legacy Root property"]
 VerificationTest[Length@dom["Select", "p.lead"], 1, TestID -> "Legacy Select property"]
 VerificationTest[Length@dom["Select", ":containsData(fkey)"] > 0, True, TestID -> "Issue 5 containsData selector"]
+VerificationTest[script["Data"], "const fkey = \"fixture\";", TestID -> "Data returns script contents"]
+VerificationTest[lead["Data"], "", TestID -> "Data excludes ordinary text nodes"]
+VerificationTest[relativeLink["AbsURL", "href"], "https://example.test/docs?q=1#intro", TestID -> "AbsURL resolves a relative attribute against BaseURI"]
+VerificationTest[relativeLink["AbsURL", "missing"], "", TestID -> "AbsURL returns an empty string for a missing attribute"]
 VerificationTest[HTMLSelect[dom, "p.lead"], dom["Select", "p.lead"], TestID -> "HTMLSelect wrapper"]
 VerificationTest[HTMLSelect["p.lead"][dom], dom["Select", "p.lead"], TestID -> "HTMLSelect operator form"]
 VerificationTest[HTMLAttribute[lead, "data-kind"], lead["Attribute", "data-kind"], TestID -> "HTMLAttribute wrapper"]
 VerificationTest[HTMLAttribute["data-kind"][lead], lead["Attribute", "data-kind"], TestID -> "HTMLAttribute operator form"]
 VerificationTest[HTMLAttributes[lead], lead["Attributes"], TestID -> "HTMLAttributes wrapper"]
 VerificationTest[HTMLParent[lead], lead["Parent"], TestID -> "HTMLParent wrapper"]
+VerificationTest[HTMLParents[lead], lead["Parents"], TestID -> "HTMLParents wrapper"]
 VerificationTest[HTMLChildren[main], main["Children"], TestID -> "HTMLChildren wrapper"]
 VerificationTest[HTMLSiblings[link], link["Siblings"], TestID -> "HTMLSiblings wrapper"]
 VerificationTest[HTMLOwnText[lead], lead["OwnText"], TestID -> "HTMLOwnText wrapper"]
 VerificationTest[HTMLAllText[lead], lead["AllText"], TestID -> "HTMLAllText wrapper"]
+VerificationTest[HTMLData[script], script["Data"], TestID -> "HTMLData wrapper"]
+VerificationTest[HTMLAbsURL[relativeLink, "href"], relativeLink["AbsURL", "href"], TestID -> "HTMLAbsURL wrapper"]
+VerificationTest[HTMLAbsURL["href"][relativeLink], relativeLink["AbsURL", "href"], TestID -> "HTMLAbsURL operator form"]
 apiDOM = jsoupLink`Private`ParseDOM["<article id=\"article\"><div class=\"box\"><span id=\"target\" data-alpha=\"1\" data-beta=\"two\">  Hello <em>world</em>\n !</span></div><p id=\"outside\">outside</p></article>"];
 apiTarget = First@apiDOM["Select", "#target"];
 VerificationTest[apiTarget["SelectFirst", "em"]["TagName"], "em", TestID -> "SelectFirst returns first matching element"]
@@ -150,4 +163,4 @@ mutable["Attribute", <|"data-a" -> "1", "data-b" -> "2"|>];
 mutable["RemoveAttribute", "data-b"];
 VerificationTest[{mutable["HasClass", "added"], mutable["Attribute", "data-a"], mutable["HasAttribute", "data-b"]}, {False, "1", False}, TestID -> "Legacy class and attribute mutation"]
 
-Clear[fixture, searchFixture, dom, searchDOM, searchMatches, searchRoot, currentTextPosition, currentElementRow, currentTextRow, secondBranch, secondBranchRow, visibleRowCount, refreshCount, main, lead, link, peer, copy, mutable, exported, apiDOM, apiTarget, unwrapDOM, unwrapHost, unwrapNode, unwrapResult, cleanDOM, cleanNode, cleanResult];
+Clear[fixture, searchFixture, dom, searchDOM, searchMatches, searchRoot, currentTextPosition, currentElementRow, currentTextRow, secondBranch, secondBranchRow, visibleRowCount, refreshCount, main, lead, link, peer, script, urlDOM, relativeLink, copy, mutable, exported, apiDOM, apiTarget, unwrapDOM, unwrapHost, unwrapNode, unwrapResult, cleanDOM, cleanNode, cleanResult];

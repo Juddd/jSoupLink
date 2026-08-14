@@ -4,7 +4,7 @@
 
 本项目依据 GPL-2.0-or-later 许可证发布。
 
-当前版本：1.1.2
+当前版本：1.1.3
 
 ## 简介
 
@@ -13,6 +13,14 @@
 在传统做法中，Mathematica 通常将 HTML 导入为符号 XML，再通过模式匹配进行较为繁琐的变换。jsoupLink 则引入了 HTML 元素对象，使遍历和修改 DOM 树变得更加直接。
 
 jsoupLink 最常见的用途是从网页中提取信息，例如表格数据。
+
+## 1.1.3 更新
+
+1.1.3 继续采用“属性式 API + 薄包装”风格，新增三项常用的 jsoup 能力：
+
+- `element["Data"]` 和 `HTMLData[element]`：读取 `<script>`、`<style>` 等元素中的数据内容；普通文本节点不计入其中。
+- `element["AbsURL", attribute]` 和 `HTMLAbsURL[element, attribute]`：根据元素的 `BaseURI` 将 `href`、`src` 等属性解析为绝对 URL；`HTMLAbsURL[attribute][element]` 也支持操作符形式。
+- `element["Parents"]` 和 `HTMLParents[element]`：按从近到远的顺序返回全部祖先元素；根元素返回空列表。
 
 ## 1.1.2 更新
 
@@ -48,10 +56,10 @@ jsoupLink 最常见的用途是从网页中提取信息，例如表格数据。
 
 ## 安装 jsoupLink
 
-jsoupLink 以 Paclet 形式发布。当前 1.1.2 的本地构建产物为 `build/jsoupLink-1.1.2.paclet`；运行 `./scripts/build.wls` 即可重新生成，然后执行：
+jsoupLink 以 Paclet 形式发布。当前 1.1.3 的本地构建产物为 `build/jsoupLink-1.1.3.paclet`；运行 `./scripts/build.wls` 即可重新生成，然后执行：
 
 ```wl
-PacletInstall["/path/to/jsoupLink-1.1.2.paclet"]
+PacletInstall["/path/to/jsoupLink-1.1.3.paclet"]
 ```
 
 使用 `Needs` 加载 jsoupLink：
@@ -120,6 +128,8 @@ element["AddClass", "selected"]
 
 - `element["Parent"]`：返回 `element` 的直接父元素。例如，`body` 的父元素通常是 `html`。
 
+- `element["Parents"]`：按从直接父元素到最远祖先的顺序返回全部祖先元素。最外层的 `html` 元素返回空列表。
+
 - `element["Children"]`：返回直接位于 `element` 下方的所有子元素。例如，`li` 通常是 `ul` 的子元素。
 
 - `element["Siblings"]`：返回与 `element` 位于同一层级的所有兄弟元素。例如，一个 `li` 的兄弟元素通常是其他 `li`。
@@ -143,6 +153,8 @@ element["AddClass", "selected"]
 - `element["InnerHTML", "html"]`：将元素的内部 HTML 设置为 `"html"`。
 
 - `element["OuterHTML"]`：返回 `element` 自身及其所有后代对应的 HTML。例如，`<div><b>Great!</b></div>` 的外部 HTML 是 `<div><b>Great!</b></div>`。
+
+- `element["Data"]`：返回元素及其后代中的组合数据内容，主要用于读取 `<script>`、`<style>` 等元素；普通文本节点不属于数据内容。
 
 - `element["OwnText"]`：返回直接位于 `element` 下的文本，不包含子元素中的文本。例如，`<p>text <b>more text</b></p>` 中 `p` 的 `"OwnText"` 为 `"text"`，而 `b` 的 `"OwnText"` 为 `"more text"`。
 
@@ -181,6 +193,8 @@ element["AddClass", "selected"]
 - `element["BaseURI"]`：返回文档的基础 URI。
 
 - `element["BaseURI", "uri"]`：设置文档的基础 URI。
+
+- `element["AbsURL", "attribute"]`：根据元素的基础 URI 将指定 URL 属性解析为绝对 URL。属性不存在、不是有效 URL，或相对 URL 没有可用基础 URI 时返回空字符串。
 
 - `element["HasClass", "class"]`：如果 `"class"` 出现在元素的 `class` 属性中，返回 `True`，否则返回 `False`。
 
@@ -224,7 +238,7 @@ element["AddClass", "selected"]
 
 - `element["DOMTree"]`：打开 DOM 树查看界面，详见下文。
 
-## 1.1/1.1.2 便捷函数
+## 便捷函数
 
 这些便捷函数只是对属性式调用的包装，因此下面两种写法可以同时使用：
 
@@ -233,7 +247,7 @@ HTMLChildren[element]
 element["Children"]
 ```
 
-8 个便捷函数与原属性式调用的对应关系如下：
+当前便捷函数与属性式调用的对应关系如下：
 
 | 便捷函数 | 等价的属性式调用 | 说明 |
 | --- | --- | --- |
@@ -246,6 +260,7 @@ element["Children"]
 | `HTMLAttributes[element]` | `element["Attributes"]` | 以关联形式返回全部属性。 |
 | `HTMLDataset[element]` | `element["Dataset"]` | 以关联形式返回 `data-*` 属性（键名不含 `data-`）。 |
 | `HTMLParent[element]` | `element["Parent"]` | 返回父元素。 |
+| `HTMLParents[element]` | `element["Parents"]` | 按从近到远的顺序返回全部祖先元素。 |
 | `HTMLChildren[element]` | `element["Children"]` | 返回子元素列表。 |
 | `HTMLSiblings[element]` | `element["Siblings"]` | 返回兄弟元素列表。 |
 | `HTMLOwnText[element]` | `element["OwnText"]` | 返回元素自身直接包含的文本，不包含子元素中的文本。 |
@@ -253,6 +268,8 @@ element["Children"]
 | `HTMLWholeOwnText[element]` | `element["WholeOwnText"]` | 返回保留空白的直接文本，不包含后代元素文本。 |
 | `HTMLAllText[element]` | `element["AllText"]` | 返回元素及其后代中的全部文本。 |
 | `HTMLCSSSelector[element]` | `element["CSSSelector"]` | 返回当前元素的 CSS 选择器。 |
+| `HTMLData[element]` | `element["Data"]` | 返回 `<script>`、`<style>` 等元素中的组合数据内容。 |
+| `HTMLAbsURL[element, attribute]` | `element["AbsURL", attribute]` | 将指定属性解析为绝对 URL；也支持操作符形式 `HTMLAbsURL[attribute][element]`。 |
 
 例如，可以使用操作符形式选择所有 `p.lead` 元素，再取得第一个元素的文本：
 
@@ -287,11 +304,14 @@ element["DOMTree"]
 
 ## 获取绝对 URL
 
-如果无法从链接中取得绝对 URL，可以尝试读取 `"abs:href"` 属性，而不是 `"href"`：
+使用 `"AbsURL"` 属性可以根据元素的基础 URI 解析链接：
 
 ```wl
-element["Attribute", "abs:href"]
+element["AbsURL", "href"]
+HTMLAbsURL["src"][imageElement]
 ```
+
+为兼容 jsoup 原生属性语法，也仍可读取 `element["Attribute", "abs:href"]`。
 
 ## 从源码构建
 
@@ -303,7 +323,7 @@ element["Attribute", "abs:href"]
 
 该脚本使用 `PacletBuild` 构建 Paclet，并验证 manifest、解包后的归档、内置 jsoup JAR、文档和入口文件名。构建和隔离安装测试的详细说明参见 [BUILD.md](BUILD.md)。
 
-当前 1.1.2 内置从 Maven Central 获取的 jsoup 1.23.1：
+当前 1.1.3 内置从 Maven Central 获取的 jsoup 1.23.1：
 
 - SHA-1：`0c0350bb325da274f0508349109516a7855d01ab`
 - SHA-256：`8b15e2b28eeb1e0a88a9b7dab4dc0c23524491c56959785dea22f7846897b668`
