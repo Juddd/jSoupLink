@@ -1,13 +1,24 @@
 # PROJECT_STATE
 
+## 1.1.2 Maintenance / 当前维护版本
+
+- 当前分支：`maint/1.1.2`，基线为已发布的 1.1.1 提交 `1e5dfb1`；1.1.2 实现已完成验证，正在进行提交、推送和发布。
+- 已修复 `Unwrap` 零参数调用和 `Clean` 的 jsoup 1.23.1 调用，后者使用 ``Safelist`relaxed[]``。
+- 已新增属性式 `SelectFirst`、`ExpectFirst`、`Closest`、`SelectXPath`、`WholeText`、`WholeOwnText`、`Dataset`、`CSSSelector`，以及对应的 `HTML*` 薄包装；选择类包装支持 operator form。
+- 已补充 `WholeOwnText` 属性和 `HTMLWholeOwnText` 薄包装，用于保留空白地读取元素直接文本。
+- `Tests/jsoupLink.wlt` 当前为 93 项，WolframKernel 和 WolframAI TestReport 均为 93/93 通过；新增测试覆盖空匹配、ExpectFirst 异常、XPath、文本空白、dataset 键转换、Unwrap、Clean 和所有包装形式。
+- `build/jsoupLink-1.1.2.paclet` 已生成，SHA-256 为 `02f658a81aac11e9223906b10372cdbd5c0c03b12327ecf432ea4d632e0c356a`；归档内容、源码哈希、JAR 哈希和旧入口排除检查通过。
+- 两条隔离路径已通过：空用户库直接安装 1.1.2；官方 1.0.0 安装后升级到 1.1.2。CodeInspector 对主内核文件无 Fatal/Error，剩余提示为既有 `Global\`HTMLElement`` 兼容设计和原作者代码风格警告。
+- `PacletBuild` 在生成归档后偶发 Wolfram FrontEnd 退出阶段 SIGSEGV；归档已生成且独立 kernel/隔离验证通过，需在交付说明中保留这一环境性现象。
+
 ## Goal / 目标
 
-在已发布的 1.1.0 维护基线上实现 DOM 树文本搜索，完成 `jsoupLink` 1.1.1 的构建、隔离安装、Wolfram 15.0/Linux FrontEnd 验收和 GitHub 发布。
+在已发布的 1.1.1 维护基线上完成 `jsoupLink` 1.1.2：修复 `Unwrap`/`Clean`，补齐八项属性式 API 与薄包装，并通过回归、构建和隔离安装验证。
 
 ## Progress / 当前进度
 
 - 基线：`d5a3456`（上游 `feature/rel1.1`）。
-- 当前分支：`maint/1.1.1`。
+- 历史发布分支：`maint/1.1.1`；当前工作分支见上方 1.1.2 维护记录。
 - 已 cherry-pick Felix Kasza 的 PR #8 构建提交并保留作者信息；入口已落在 `jsoupLink/Kernel/jsoupLink.wl`。
 - 已完成 #4 的入口/元数据修复、锁定 #5、更新 jsoup、补全文档/许可证/测试和唯一构建入口。
 - 已提交并发布到 `Juddd/jSoupLink`；1.1.0 tag 与 Release 均指向已验证的维护提交。

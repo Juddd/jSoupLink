@@ -3,7 +3,7 @@ PacletObject[
     "Name" -> "jsoupLink",
     "Description" -> "HTML parser for Mathematica/Wolfram Language",
     "Creator" -> "Calle Ekdahl",
-    "Version" -> "1.1.1",
+    "Version" -> "1.1.2",
     "WolframVersion" -> "12.3+",
     "License" -> "GPL-2.0+",
     "Extensions" -> {
@@ -21,6 +21,14 @@ PacletObject[
           "jsoupLink`HTMLSiblings",
           "jsoupLink`HTMLOwnText",
           "jsoupLink`HTMLAllText",
+          "jsoupLink`HTMLSelectFirst",
+          "jsoupLink`HTMLExpectFirst",
+          "jsoupLink`HTMLClosest",
+          "jsoupLink`HTMLSelectXPath",
+          "jsoupLink`HTMLWholeText",
+          "jsoupLink`HTMLWholeOwnText",
+          "jsoupLink`HTMLDataset",
+          "jsoupLink`HTMLCSSSelector",
           "jsoupLink`HTMLTree"
         }
       },

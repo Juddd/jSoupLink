@@ -4,7 +4,7 @@
 
 本项目依据 GPL-2.0-or-later 许可证发布。
 
-当前版本：1.1.1
+当前版本：1.1.2
 
 ## 简介
 
@@ -13,6 +13,15 @@
 在传统做法中，Mathematica 通常将 HTML 导入为符号 XML，再通过模式匹配进行较为繁琐的变换。jsoupLink 则引入了 HTML 元素对象，使遍历和修改 DOM 树变得更加直接。
 
 jsoupLink 最常见的用途是从网页中提取信息，例如表格数据。
+
+## 1.1.2 更新
+
+1.1.2 在保持属性式 API 兼容的基础上，补齐了八项常用的 jsoup 能力，并修复了两个已有属性：
+
+- 修复 `element["Unwrap"]` 的零参数调用。它会移除当前元素并把子元素提升到原父元素下，同时返回原父元素。
+- 修复 `element["Clean"]`。默认使用 jsoup 的 ``Safelist`relaxed[]`` 清理内部 HTML，移除脚本等危险内容并保留常见安全元素。
+- 新增 `SelectFirst`、`ExpectFirst`、`Closest`、`SelectXPath`、`WholeText`、`WholeOwnText`、`Dataset` 和 `CSSSelector` 属性，以及对应的 `HTMLSelectFirst`、`HTMLExpectFirst`、`HTMLClosest`、`HTMLSelectXPath`、`HTMLWholeText`、`HTMLWholeOwnText`、`HTMLDataset` 和 `HTMLCSSSelector` 薄包装。
+- 选择类便捷函数支持与 `HTMLSelect` 相同的操作符形式；`Dataset` 返回关联，键名沿用 jsoup 语义，即去掉 `data-` 前缀。
 
 ## 1.1.1 更新
 
@@ -39,10 +48,10 @@ jsoupLink 最常见的用途是从网页中提取信息，例如表格数据。
 
 ## 安装 jsoupLink
 
-jsoupLink 以 Paclet 形式发布。请从 [Releases 页面](https://github.com/Juddd/jSoupLink/releases)下载 1.1.1，然后执行：
+jsoupLink 以 Paclet 形式发布。当前 1.1.2 的本地构建产物为 `build/jsoupLink-1.1.2.paclet`；运行 `./scripts/build.wls` 即可重新生成，然后执行：
 
 ```wl
-PacletInstall["/path/to/jsoupLink-1.1.1.paclet"]
+PacletInstall["/path/to/jsoupLink-1.1.2.paclet"]
 ```
 
 使用 `Needs` 加载 jsoupLink：
@@ -117,6 +126,14 @@ element["AddClass", "selected"]
 
 - `element["Select", "selector"]`：返回 `element` 下方所有匹配 CSS 选择器的元素。选择器语法参见 [Use selector syntax to find elements](https://jsoup.org/cookbook/extracting-data/selector-syntax)。
 
+- `element["SelectFirst", "selector"]`：返回第一个匹配 CSS 选择器的元素；没有匹配时返回 `Null`。
+
+- `element["ExpectFirst", "selector"]`：返回第一个匹配 CSS 选择器的元素；没有匹配时抛出异常。
+
+- `element["Closest", "selector"]`：从当前元素（包含当前元素）开始向祖先查找第一个匹配元素；没有匹配时返回 `Null`。
+
+- `element["SelectXPath", "xpath"]`：返回匹配 XPath 表达式的元素列表。
+
 - `element["AllElements"]`：返回 `element` 下方的所有元素。
 
 - `element["Value"]`：返回元素的 `value` 值（如果存在）。
@@ -128,6 +145,10 @@ element["AddClass", "selected"]
 - `element["OuterHTML"]`：返回 `element` 自身及其所有后代对应的 HTML。例如，`<div><b>Great!</b></div>` 的外部 HTML 是 `<div><b>Great!</b></div>`。
 
 - `element["OwnText"]`：返回直接位于 `element` 下的文本，不包含子元素中的文本。例如，`<p>text <b>more text</b></p>` 中 `p` 的 `"OwnText"` 为 `"text"`，而 `b` 的 `"OwnText"` 为 `"more text"`。
+
+- `element["WholeText"]`：返回元素及其后代的完整文本，并保留原始空白；这与会规范化空白的 `"AllText"` 不同。
+
+- `element["WholeOwnText"]`：返回元素直接拥有的文本，并保留原始空白；不包含子元素中的文本。这与会规范化空白的 `"OwnText"` 不同。
 
 - `element["AllText"]`：返回 `element` 下方的全部文本。例如，对 `html` 元素调用时会返回文档中的全部文本。
 
@@ -149,6 +170,8 @@ element["AddClass", "selected"]
 
 - `element["Attributes"]`：以关联形式返回全部属性及其值。
 
+- `element["Dataset"]`：以关联形式返回全部 `data-*` 属性。关联键遵循 jsoup 语义，不包含 `data-` 前缀，例如 `data-kind="intro"` 对应 `"kind" -> "intro"`。
+
 - `element["RemoveAttribute", "attr"]`：移除属性 `attr`。
 
 - `element["IsBlock"]`：如果 `element` 是块级元素，返回 `True`，否则返回 `False`。
@@ -166,6 +189,8 @@ element["AddClass", "selected"]
 - `element["RemoveClass", "class"]`：从元素的 `class` 属性移除类名。
 
 - `element["ToggleClass", "class"]`：如果元素尚无该类名则添加，否则移除。
+
+- `element["CSSSelector"]`：返回能够标识当前元素的 CSS 选择器。具有 `id` 时，jsoup 通常会直接返回形如 `"#target"` 的选择器。
 
 - `element["Before", "html"]`：解析 `"html"`，并将所得内容插入 `element` 之前。
 
@@ -199,9 +224,9 @@ element["AddClass", "selected"]
 
 - `element["DOMTree"]`：打开 DOM 树查看界面，详见下文。
 
-## 1.1 便捷函数
+## 1.1/1.1.2 便捷函数
 
-上游 1.1 分支新增了 8 个便捷函数。它们只是对属性式调用的包装，因此下面两种写法可以同时使用：
+这些便捷函数只是对属性式调用的包装，因此下面两种写法可以同时使用：
 
 ```wl
 HTMLChildren[element]
@@ -210,16 +235,24 @@ element["Children"]
 
 8 个便捷函数与原属性式调用的对应关系如下：
 
-| 1.1 便捷函数 | 等价的属性式调用 | 说明 |
+| 便捷函数 | 等价的属性式调用 | 说明 |
 | --- | --- | --- |
 | `HTMLSelect[rootElement, selector]` | `rootElement["Select", selector]` | 返回匹配 CSS 选择器的元素；也支持操作符形式 `HTMLSelect[selector][rootElement]`。 |
+| `HTMLSelectFirst[rootElement, selector]` | `rootElement["SelectFirst", selector]` | 返回第一个匹配元素；没有匹配时为 `Null`；也支持操作符形式。 |
+| `HTMLExpectFirst[rootElement, selector]` | `rootElement["ExpectFirst", selector]` | 返回第一个匹配元素；没有匹配时抛出异常；也支持操作符形式。 |
+| `HTMLClosest[element, selector]` | `element["Closest", selector]` | 返回当前元素或祖先中的最近匹配元素；也支持操作符形式。 |
+| `HTMLSelectXPath[rootElement, xpath]` | `rootElement["SelectXPath", xpath]` | 返回匹配 XPath 的元素列表；也支持操作符形式。 |
 | `HTMLAttribute[element, attribute]` | `element["Attribute", attribute]` | 返回指定属性的值；也支持操作符形式 `HTMLAttribute[attribute][element]`。 |
 | `HTMLAttributes[element]` | `element["Attributes"]` | 以关联形式返回全部属性。 |
+| `HTMLDataset[element]` | `element["Dataset"]` | 以关联形式返回 `data-*` 属性（键名不含 `data-`）。 |
 | `HTMLParent[element]` | `element["Parent"]` | 返回父元素。 |
 | `HTMLChildren[element]` | `element["Children"]` | 返回子元素列表。 |
 | `HTMLSiblings[element]` | `element["Siblings"]` | 返回兄弟元素列表。 |
 | `HTMLOwnText[element]` | `element["OwnText"]` | 返回元素自身直接包含的文本，不包含子元素中的文本。 |
+| `HTMLWholeText[element]` | `element["WholeText"]` | 返回保留空白的完整文本。 |
+| `HTMLWholeOwnText[element]` | `element["WholeOwnText"]` | 返回保留空白的直接文本，不包含后代元素文本。 |
 | `HTMLAllText[element]` | `element["AllText"]` | 返回元素及其后代中的全部文本。 |
+| `HTMLCSSSelector[element]` | `element["CSSSelector"]` | 返回当前元素的 CSS 选择器。 |
 
 例如，可以使用操作符形式选择所有 `p.lead` 元素，再取得第一个元素的文本：
 
@@ -270,7 +303,7 @@ element["Attribute", "abs:href"]
 
 该脚本使用 `PacletBuild` 构建 Paclet，并验证 manifest、解包后的归档、内置 jsoup JAR、文档和入口文件名。构建和隔离安装测试的详细说明参见 [BUILD.md](BUILD.md)。
 
-当前 1.1.1 内置从 Maven Central 获取的 jsoup 1.23.1：
+当前 1.1.2 内置从 Maven Central 获取的 jsoup 1.23.1：
 
 - SHA-1：`0c0350bb325da274f0508349109516a7855d01ab`
 - SHA-256：`8b15e2b28eeb1e0a88a9b7dab4dc0c23524491c56959785dea22f7846897b668`

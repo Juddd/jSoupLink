@@ -7,7 +7,7 @@
 (* :Author: Calle Ekdahl                   *)
 (* :Date: 2026-08-12                       *)
 
-(* :Package Version: 1.1.1                 *)
+(* :Package Version: 1.1.2                 *)
 (* :Mathematica Version: 12.3.0.0          *)
 (* :Copyright: (c) 2015-2024 Calle Ekdahl  *)
 (* :Keywords:                              *)
@@ -25,6 +25,14 @@ HTMLChildren::usage = "HTMLChildren[element] returns the list of children of the
 HTMLSiblings::usage = "HTMLSiblings[element] returns the list of siblings of the element.";
 HTMLOwnText::usage = "HTMLOwnText[element] returns the text directly under the element, i.e. not nested in a child. The own text of <h1>Hello <b>world</b></h1> is \"Hello\".";
 HTMLAllText::usage = "HTMLAllText[element] returns all text under the element. Applied to <h1>Hello <b>world</b></h1> it would return \"Hello world\".";
+HTMLSelectFirst::usage = "HTMLSelectFirst[rootElement, selector] returns the first element that matches the CSS selector. HTMLSelectFirst[selector] represents an operator form.";
+HTMLExpectFirst::usage = "HTMLExpectFirst[rootElement, selector] returns the first element that matches the CSS selector and fails if there is no match. HTMLExpectFirst[selector] represents an operator form.";
+HTMLClosest::usage = "HTMLClosest[element, selector] returns the closest matching element, including the element itself. HTMLClosest[selector] represents an operator form.";
+HTMLSelectXPath::usage = "HTMLSelectXPath[rootElement, xpath] returns the elements that match the XPath expression. HTMLSelectXPath[xpath] represents an operator form.";
+HTMLWholeText::usage = "HTMLWholeText[element] returns the element's full text while preserving whitespace.";
+HTMLWholeOwnText::usage = "HTMLWholeOwnText[element] returns the element's direct text while preserving whitespace, excluding descendant elements.";
+HTMLDataset::usage = "HTMLDataset[element] returns the element's data-* attributes as an association.";
+HTMLCSSSelector::usage = "HTMLCSSSelector[element] returns a CSS selector that identifies the element.";
 HTMLTree::usage = "HTMLTree[element] opens an interactive DOM tree for the element. It is equivalent to element[\"DOMTree\"].";
 
 Begin["`Private`"]; (* Begin Private Context *)
@@ -33,6 +41,7 @@ Needs["JLink`"];
 InstallJava[];
 AddToClassPath[FileNameJoin[{DirectoryName[DirectoryName[$InputFileName]], "Java", "jsoup-1.23.1.jar"}]];
 LoadJavaClass["org.jsoup.Jsoup"];
+LoadJavaClass["org.jsoup.safety.Safelist"];
 
 ImportExport`RegisterImport["HTMLDOM", jsoupLink`DownloadDOM];
 ImportExport`RegisterExport["HTMLDOM", jsoupLink`ExportDOM];
@@ -45,6 +54,10 @@ ParseDOM[html_String, baseUri_String:""] := Module[{doc, root},
   root = First[doc@children[]@toArray[]];
   Global`HTMLElement[root]
 ];
+
+wrapElement[node_] := If[node === Null, Null, Global`HTMLElement[node]];
+wrapElements[elements_] := Global`HTMLElement /@ elements@toArray[];
+javaMapAssociation[map_] := Association @@ (#@getKey[] -> #@getValue[] & /@ map@entrySet[]@toArray[]);
 
 ExportDOM[filename_, data_, opts___] := Export[filename, data["OuterHTML"], "Text", opts];
 
@@ -83,12 +96,18 @@ Global`HTMLElement[el_]["Parent"] := If[el@tagName[] != "html", Global`HTMLEleme
 Global`HTMLElement[el_]["Children"] := Global`HTMLElement /@ el@children[]@toArray[];
 Global`HTMLElement[el_]["Siblings"] := Global`HTMLElement /@ el@siblingElements[]@toArray[];
 Global`HTMLElement[el_]["Select", selector_String] := Global`HTMLElement /@ el@select[selector]@toArray[];
+Global`HTMLElement[el_]["SelectFirst", selector_String] := wrapElement[el@selectFirst[selector]];
+Global`HTMLElement[el_]["ExpectFirst", selector_String] := Global`HTMLElement[el@expectFirst[selector]];
+Global`HTMLElement[el_]["Closest", selector_String] := wrapElement[el@closest[selector]];
+Global`HTMLElement[el_]["SelectXPath", xpath_String] := wrapElements[el@selectXpath[xpath]];
 Global`HTMLElement[el_]["AllElements"] := Global`HTMLElement /@ el@getAllElements[]@toArray[];
 Global`HTMLElement[el_]["Value"] := el@val[];
 Global`HTMLElement[el_]["InnerHTML"] := el@html[];
 Global`HTMLElement[el_]["InnerHTML", newHTML_String] := Global`HTMLElement[el@html[newHTML]];
 Global`HTMLElement[el_]["OuterHTML"] := el@outerHtml[];
 Global`HTMLElement[el_]["OwnText"] := el@ownText[];
+Global`HTMLElement[el_]["WholeText"] := el@wholeText[];
+Global`HTMLElement[el_]["WholeOwnText"] := el@wholeOwnText[];
 Global`HTMLElement[el_]["AllText"] := el@text[];
 Global`HTMLElement[el_]["AllText", txt_] := Global`HTMLElement[el@text[txt]];
 Global`HTMLElement[el_]["ID"] := el@id[];
@@ -98,12 +117,14 @@ Global`HTMLElement[el_]["Attribute", attribute_String] := el@attr[attribute];
 Global`HTMLElement[el_]["Attribute", key_String, value_String] := Global`HTMLElement[el@attr[key, value]];
 Global`HTMLElement[el_]["Attribute", assoc_Association] := (KeyValueMap[el@attr[#,#2] &, assoc]; Global`HTMLElement[el]);
 Global`HTMLElement[el_]["Attributes"] := Association @@ (#@getKey[] -> #@getValue[] & /@ el@attributes[]@asList[]@toArray[]);
+Global`HTMLElement[el_]["Dataset"] := javaMapAssociation[el@dataset[]];
 Global`HTMLElement[el_]["RemoveAttribute", attribute_String] := Global`HTMLElement[el@removeAttr[attribute]];
 Global`HTMLElement[el_]["IsBlock"] := el@isBlock[];
 Global`HTMLElement[el_]["HasText"] := el@hasText[];
 Global`HTMLElement[el_]["BaseURI"] := el@baseUri[];
 Global`HTMLElement[el_]["BaseURI", uri_String] := el@setBaseUri[uri];
 Global`HTMLElement[el_]["HasClass", class_String] := el@hasClass[class];
+Global`HTMLElement[el_]["CSSSelector"] := el@cssSelector[];
 Global`HTMLElement[el_]["AddClass", class_String] := Global`HTMLElement[el@addClass[class]];
 Global`HTMLElement[el_]["RemoveClass", class_String] := Global`HTMLElement[el@removeClass[class]];
 Global`HTMLElement[el_]["ToggleClass", class_String] := Global`HTMLElement[el@toggleClass[class]];
@@ -118,16 +139,16 @@ Global`HTMLElement[el_]["Prepend", Global`HTMLElement[child_]] := Global`HTMLEle
 Global`HTMLElement[el_]["ReplaceWith", Global`HTMLElement[replacement_]] := Global`HTMLElement[el@replaceWith[replacement]];
 Global`HTMLElement[el_]["Remove"] := (el@remove[]; Null);
 Global`HTMLElement[el_]["Wrap", html_] := Global`HTMLElement[el@wrap[html]];
-Global`HTMLElement[el_]["Unwrap", html_] := With[{p=el@parent[]}, el@unwrap[]; Global`HTMLElement[p]];
-Global`HTMLElement[el_]["Clean"] := Global`HTMLElement[el@html[Jsoup`clean[el@html[]]]];
+Global`HTMLElement[el_]["Unwrap"] := With[{p = el@parent[]}, el@unwrap[]; wrapElement[p]];
+Global`HTMLElement[el_]["Clean"] := Global`HTMLElement[el@html[Jsoup`clean[el@html[], Safelist`relaxed[]]]];
 Global`HTMLElement[el_]["DeepCopy"] := Global`HTMLElement[JavaBlock[el@clone[]]];
 Global`HTMLElement[el_]["DOMTree"] := popup[el];
 
 properties = {"TagName", "Root", "Parent", "Children", "Siblings",
-  "Select", "AllElements", "Value", "InnerHTML", "OuterHTML",
-  "OwnText", "AllText", "ID", "ClassNames", "HasAttribute",
-  "Attribute", "Attributes", "RemoveAttribute", "IsBlock", "HasText",
-  "BaseURI", "HasClass", "AddClass", "RemoveClass", "ToggleClass",
+  "Select", "SelectFirst", "ExpectFirst", "Closest", "SelectXPath", "AllElements", "Value", "InnerHTML", "OuterHTML",
+  "OwnText", "WholeText", "WholeOwnText", "AllText", "ID", "ClassNames", "HasAttribute",
+  "Attribute", "Attributes", "Dataset", "RemoveAttribute", "IsBlock", "HasText",
+  "BaseURI", "HasClass", "AddClass", "RemoveClass", "ToggleClass", "CSSSelector",
   "After", "Before", "Append", "Prepend", "ReplaceWith", "Remove",
   "Wrap", "Unwrap", "Clean", "DeepCopy", "DOMTree"};
 
@@ -166,6 +187,18 @@ HTMLChildren[el_Global`HTMLElement] := el["Children"];
 HTMLSiblings[el_Global`HTMLElement] := el["Siblings"];
 HTMLOwnText[el_Global`HTMLElement] := el["OwnText"];
 HTMLAllText[el_Global`HTMLElement] := el["AllText"];
+HTMLSelectFirst[el_Global`HTMLElement, selector_String] := el["SelectFirst", selector];
+HTMLSelectFirst[selector_String][el_Global`HTMLElement] := el["SelectFirst", selector];
+HTMLExpectFirst[el_Global`HTMLElement, selector_String] := el["ExpectFirst", selector];
+HTMLExpectFirst[selector_String][el_Global`HTMLElement] := el["ExpectFirst", selector];
+HTMLClosest[el_Global`HTMLElement, selector_String] := el["Closest", selector];
+HTMLClosest[selector_String][el_Global`HTMLElement] := el["Closest", selector];
+HTMLSelectXPath[el_Global`HTMLElement, xpath_String] := el["SelectXPath", xpath];
+HTMLSelectXPath[xpath_String][el_Global`HTMLElement] := el["SelectXPath", xpath];
+HTMLWholeText[el_Global`HTMLElement] := el["WholeText"];
+HTMLWholeOwnText[el_Global`HTMLElement] := el["WholeOwnText"];
+HTMLDataset[el_Global`HTMLElement] := el["Dataset"];
+HTMLCSSSelector[el_Global`HTMLElement] := el["CSSSelector"];
 HTMLTree[el_Global`HTMLElement] := el["DOMTree"];
 
 (* DOM Tree *)

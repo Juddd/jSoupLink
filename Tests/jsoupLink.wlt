@@ -13,7 +13,7 @@ peer = First@dom["Select", ".peer"];
 
 VerificationTest[Head[dom] === Global`HTMLElement, True, TestID -> "HTMLElement remains in Global context"]
 VerificationTest[dom["TagName"], "html", TestID -> "Import HTMLDOM"]
-VerificationTest[dom["Properties"], {"TagName", "Root", "Parent", "Children", "Siblings", "Select", "AllElements", "Value", "InnerHTML", "OuterHTML", "OwnText", "AllText", "ID", "ClassNames", "HasAttribute", "Attribute", "Attributes", "RemoveAttribute", "IsBlock", "HasText", "BaseURI", "HasClass", "AddClass", "RemoveClass", "ToggleClass", "After", "Before", "Append", "Prepend", "ReplaceWith", "Remove", "Wrap", "Unwrap", "Clean", "DeepCopy", "DOMTree"}, TestID -> "Legacy property list"]
+VerificationTest[dom["Properties"], {"TagName", "Root", "Parent", "Children", "Siblings", "Select", "SelectFirst", "ExpectFirst", "Closest", "SelectXPath", "AllElements", "Value", "InnerHTML", "OuterHTML", "OwnText", "WholeText", "WholeOwnText", "AllText", "ID", "ClassNames", "HasAttribute", "Attribute", "Attributes", "Dataset", "RemoveAttribute", "IsBlock", "HasText", "BaseURI", "HasClass", "AddClass", "RemoveClass", "ToggleClass", "CSSSelector", "After", "Before", "Append", "Prepend", "ReplaceWith", "Remove", "Wrap", "Unwrap", "Clean", "DeepCopy", "DOMTree"}, TestID -> "Property list includes 1.1.2 API"]
 VerificationTest[lead["OwnText"], "Hello", TestID -> "Legacy OwnText property"]
 VerificationTest[lead["AllText"], "Hello world", TestID -> "Legacy AllText property"]
 VerificationTest[lead["Attribute", "data-kind"], "intro", TestID -> "Legacy Attribute property"]
@@ -36,6 +36,40 @@ VerificationTest[HTMLChildren[main], main["Children"], TestID -> "HTMLChildren w
 VerificationTest[HTMLSiblings[link], link["Siblings"], TestID -> "HTMLSiblings wrapper"]
 VerificationTest[HTMLOwnText[lead], lead["OwnText"], TestID -> "HTMLOwnText wrapper"]
 VerificationTest[HTMLAllText[lead], lead["AllText"], TestID -> "HTMLAllText wrapper"]
+apiDOM = jsoupLink`Private`ParseDOM["<article id=\"article\"><div class=\"box\"><span id=\"target\" data-alpha=\"1\" data-beta=\"two\">  Hello <em>world</em>\n !</span></div><p id=\"outside\">outside</p></article>"];
+apiTarget = First@apiDOM["Select", "#target"];
+VerificationTest[apiTarget["SelectFirst", "em"]["TagName"], "em", TestID -> "SelectFirst returns first matching element"]
+VerificationTest[apiTarget["SelectFirst", ".missing"], Null, TestID -> "SelectFirst returns Null for no match"]
+VerificationTest[apiTarget["ExpectFirst", "em"]["TagName"], "em", TestID -> "ExpectFirst returns first matching element"]
+VerificationTest[Quiet@Check[apiTarget["ExpectFirst", ".missing"], $Failed], $Failed, TestID -> "ExpectFirst fails for no match"]
+VerificationTest[apiTarget["Closest", "article"]["ID"], "article", TestID -> "Closest includes matching ancestor"]
+VerificationTest[apiTarget["Closest", ".missing"], Null, TestID -> "Closest returns Null for no match"]
+VerificationTest[Sort[(#["TagName"] &) /@ apiTarget["SelectXPath", ".//em"]], {"em"}, TestID -> "SelectXPath returns matching elements"]
+VerificationTest[apiTarget["WholeText"], "  Hello world\n !", TestID -> "WholeText preserves descendant text whitespace"]
+VerificationTest[apiTarget["WholeOwnText"], "  Hello \n !", TestID -> "WholeOwnText preserves direct text whitespace"]
+VerificationTest[apiTarget["Dataset"], <|"alpha" -> "1", "beta" -> "two"|>, TestID -> "Dataset returns an association"]
+VerificationTest[apiTarget["CSSSelector"], "#target", TestID -> "CSSSelector returns a selector"]
+VerificationTest[HTMLSelectFirst[apiDOM, "#target"], apiTarget, TestID -> "HTMLSelectFirst wrapper"]
+VerificationTest[HTMLSelectFirst["em"][apiTarget]["TagName"], "em", TestID -> "HTMLSelectFirst operator form"]
+VerificationTest[HTMLExpectFirst[apiTarget, "em"], apiTarget["ExpectFirst", "em"], TestID -> "HTMLExpectFirst wrapper"]
+VerificationTest[HTMLExpectFirst["em"][apiTarget]["TagName"], "em", TestID -> "HTMLExpectFirst operator form"]
+VerificationTest[HTMLClosest[apiTarget, "article"], apiTarget["Closest", "article"], TestID -> "HTMLClosest wrapper"]
+VerificationTest[HTMLClosest["article"][apiTarget]["ID"], "article", TestID -> "HTMLClosest operator form"]
+VerificationTest[HTMLSelectXPath[apiTarget, ".//em"], apiTarget["SelectXPath", ".//em"], TestID -> "HTMLSelectXPath wrapper"]
+VerificationTest[HTMLSelectXPath[".//em"][apiTarget][[1]]["TagName"], "em", TestID -> "HTMLSelectXPath operator form"]
+VerificationTest[HTMLWholeText[apiTarget], apiTarget["WholeText"], TestID -> "HTMLWholeText wrapper"]
+VerificationTest[HTMLWholeOwnText[apiTarget], apiTarget["WholeOwnText"], TestID -> "HTMLWholeOwnText wrapper"]
+VerificationTest[HTMLDataset[apiTarget], apiTarget["Dataset"], TestID -> "HTMLDataset wrapper"]
+VerificationTest[HTMLCSSSelector[apiTarget], apiTarget["CSSSelector"], TestID -> "HTMLCSSSelector wrapper"]
+unwrapDOM = jsoupLink`Private`ParseDOM["<div id=\"host\"><section id=\"wrapper\"><span>A</span><b>B</b></section></div>"];
+unwrapHost = First@unwrapDOM["Select", "#host"];
+unwrapNode = First@unwrapDOM["Select", "#wrapper"];
+unwrapResult = unwrapNode["Unwrap"];
+VerificationTest[{Head[unwrapResult], unwrapResult["ID"], Length@unwrapHost["Select", "#wrapper"], (#["TagName"] &) /@ unwrapHost["Children"]}, {Global`HTMLElement, "host", 0, {"span", "b"}}, TestID -> "Unwrap removes wrapper and preserves children"]
+cleanDOM = jsoupLink`Private`ParseDOM["<div id=\"clean\"><p>safe</p><script>alert(1)</script><a href=\"javascript:bad\">link</a></div>"];
+cleanNode = First@cleanDOM["Select", "#clean"];
+cleanResult = Quiet@Check[cleanNode["Clean"], $Failed];
+VerificationTest[{Head[cleanResult], Length@cleanNode["Select", "script"], Length@cleanNode["Select", "p"], StringContainsQ[cleanNode["InnerHTML"], "alert"]}, {Global`HTMLElement, 0, 1, False}, TestID -> "Clean removes unsafe content and preserves safe elements"]
 VerificationTest[StringQ[HTMLTree::usage] && StringContainsQ[HTMLTree::usage, "DOM tree"], True, TestID -> "HTMLTree usage"]
 VerificationTest[Length[DownValues[HTMLTree]] > 0, True, TestID -> "HTMLTree definition exists"]
 VerificationTest[!FreeQ[SubValues[Global`HTMLElement], jsoupLink`Private`popup, Infinity], True, TestID -> "DOM tree uses editable document window"]
@@ -116,4 +150,4 @@ mutable["Attribute", <|"data-a" -> "1", "data-b" -> "2"|>];
 mutable["RemoveAttribute", "data-b"];
 VerificationTest[{mutable["HasClass", "added"], mutable["Attribute", "data-a"], mutable["HasAttribute", "data-b"]}, {False, "1", False}, TestID -> "Legacy class and attribute mutation"]
 
-Clear[fixture, searchFixture, dom, searchDOM, searchMatches, searchRoot, currentTextPosition, currentElementRow, currentTextRow, secondBranch, secondBranchRow, visibleRowCount, refreshCount, main, lead, link, peer, copy, mutable, exported];
+Clear[fixture, searchFixture, dom, searchDOM, searchMatches, searchRoot, currentTextPosition, currentElementRow, currentTextRow, secondBranch, secondBranchRow, visibleRowCount, refreshCount, main, lead, link, peer, copy, mutable, exported, apiDOM, apiTarget, unwrapDOM, unwrapHost, unwrapNode, unwrapResult, cleanDOM, cleanNode, cleanResult];
