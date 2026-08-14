@@ -2,7 +2,7 @@
 
 ## 1.1.3 Development / 当前开发版本
 
-- 当前分支：`maint/1.1.3`，基线为已发布 1.1.2 的状态提交 `40fb14c`；当前发布候选尚未推送或发布。
+- 当前分支：`maint/1.1.3`，基线为已发布 1.1.2 的状态提交 `40fb14c`；1.1.3 实现提交为 `8ece48a13e83836f3364533bb0b5604501bd6b6e`，已推送到 `origin/maint/1.1.3` 和 `origin/master`。
 - 版本号已统一更新为 1.1.3；新增属性式 `Data`、`AbsURL`、`Parents`，以及对应的 `HTMLData`、`HTMLAbsURL`、`HTMLParents` 薄包装；`HTMLAbsURL` 支持操作符形式。
 - `Data` 返回 `<script>`、`<style>` 等数据内容且不混入普通 TextNode；`AbsURL` 根据 `BaseURI` 解析属性，缺失属性返回空字符串；`Parents` 按从近到远返回祖先，根元素返回空列表。
 - `Tests/jsoupLink.wlt` 当前为 103 项，WolframKernel MUnit 103/103 通过；新增 10 项测试覆盖上述语义、边界和全部薄包装形式。
@@ -10,6 +10,8 @@
 - `build/jsoupLink-1.1.3.paclet` 已生成，大小 686292 bytes，SHA-256 为 `c05ef9227007c2e8299af9c2256cfc5cd2ac6b62b64cb418c9d3d12dbd9eea16`；构建脚本的 manifest、解包归档、JAR 哈希和旧入口排除检查通过。
 - 两条隔离路径已通过：空用户库直接安装 1.1.3；官方 1.0.0 安装后升级到 1.1.3。两次 fresh-kernel 验证均覆盖三个新 API。
 - `PacletBuild` 完成并返回成功后，Wolfram FrontEnd 退出阶段仍复现已知 SIGSEGV；归档已独立通过隔离安装和 fresh-kernel 验证。
+- Annotated tag `1.1.3` 已推送并解引用到实现提交 `8ece48a`；GitHub Release `https://github.com/Juddd/jSoupLink/releases/tag/1.1.3` 已正式发布，非草稿、非预发布。
+- Release Paclet 资产为 686292 bytes，GitHub digest 为 `sha256:c05ef9227007c2e8299af9c2256cfc5cd2ac6b62b64cb418c9d3d12dbd9eea16`；校验文件为 89 bytes。两个资产从 GitHub 独立下载后，`sha256sum -c` 通过。
 
 ## 1.1.2 Maintenance / 已发布版本
 
