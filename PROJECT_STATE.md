@@ -2,13 +2,15 @@
 
 ## 1.1.2 Maintenance / 当前维护版本
 
-- 当前分支：`maint/1.1.2`，基线为已发布的 1.1.1 提交 `1e5dfb1`；1.1.2 实现已完成验证，正在进行提交、推送和发布。
+- 当前分支：`maint/1.1.2`，基线为已发布的 1.1.1 提交 `1e5dfb1`；1.1.2 已提交、推送并发布。
 - 已修复 `Unwrap` 零参数调用和 `Clean` 的 jsoup 1.23.1 调用，后者使用 ``Safelist`relaxed[]``。
 - 已新增属性式 `SelectFirst`、`ExpectFirst`、`Closest`、`SelectXPath`、`WholeText`、`WholeOwnText`、`Dataset`、`CSSSelector`，以及对应的 `HTML*` 薄包装；选择类包装支持 operator form。
 - 已补充 `WholeOwnText` 属性和 `HTMLWholeOwnText` 薄包装，用于保留空白地读取元素直接文本。
 - `Tests/jsoupLink.wlt` 当前为 93 项，WolframKernel 和 WolframAI TestReport 均为 93/93 通过；新增测试覆盖空匹配、ExpectFirst 异常、XPath、文本空白、dataset 键转换、Unwrap、Clean 和所有包装形式。
 - `build/jsoupLink-1.1.2.paclet` 已生成，SHA-256 为 `02f658a81aac11e9223906b10372cdbd5c0c03b12327ecf432ea4d632e0c356a`；归档内容、源码哈希、JAR 哈希和旧入口排除检查通过。
 - 两条隔离路径已通过：空用户库直接安装 1.1.2；官方 1.0.0 安装后升级到 1.1.2。CodeInspector 对主内核文件无 Fatal/Error，剩余提示为既有 `Global\`HTMLElement`` 兼容设计和原作者代码风格警告。
+- 实现提交为 `a81ad01e906e30c40188824a084d9df51eb28be6`，已推送 `origin/maint/1.1.2`；annotated tag `1.1.2` 已推送并指向该实现提交。
+- GitHub Release 已发布：`https://github.com/Juddd/jSoupLink/releases/tag/1.1.2`。GitHub MCP 回读确认正式、非草稿、非预发布；`.paclet` 资产为 686099 bytes，digest 为 `sha256:02f658a81aac11e9223906b10372cdbd5c0c03b12327ecf432ea4d632e0c356a`，`.sha256` 校验资产也已上传。
 - `PacletBuild` 在生成归档后偶发 Wolfram FrontEnd 退出阶段 SIGSEGV；归档已生成且独立 kernel/隔离验证通过，需在交付说明中保留这一环境性现象。
 
 ## Goal / 目标
